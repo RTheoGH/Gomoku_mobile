@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Gomoku</string>
+    <string name="play_offline">Partie hors-ligne</string>
+    <string name="play_online">Partie en ligne</string>
+    <string name="play_asynchronus">Partie asynchrone</string>
+    <string name="friends">Amis</string>
+    <string name="sign_up">S\'inscrire</string>
+    <string name="sign_in">Se connecter</string>
+    <string name="sign_out">Se déconnecter</string>
+    <string name="profile">Profil</string>
 </resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gomoku</string>
+    <string name="play_offline">Offline game</string>
+    <string name="play_online">Online game</string>
+    <string name="play_asynchronus">Asynchronus game</string>
+    <string name="friends">Friends</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_out">Sign out</string>
+    <string name="profile">Profile</string>
+</resources>
