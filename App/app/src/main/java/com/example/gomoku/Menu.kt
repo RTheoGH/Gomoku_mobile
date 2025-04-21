@@ -28,9 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
 @Composable
-fun Menu(pad : PaddingValues){
+fun Menu(pad : PaddingValues, navController: NavHostController){
     var expanded by remember { mutableStateOf(false) }
 
     Column(
@@ -72,11 +73,18 @@ fun Menu(pad : PaddingValues){
                 ) {
                     DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.sign_in)) },
-                        onClick = { expanded = false }
+                        onClick = {
+                            expanded = false
+                            navController.navigate(Screens.Sign_in.name)
+
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.sign_up)) },
-                        onClick = { expanded = false }
+                        onClick = {
+                            expanded = false
+                            navController.navigate(Screens.Sign_up.name)
+                        }
                     )
                 }
             }

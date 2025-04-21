@@ -19,6 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.gomoku.ui.theme.GomokuTheme
 
 class MainActivity : ComponentActivity() {
@@ -35,7 +39,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(){
+fun App(
+    navController: NavHostController = rememberNavController()
+){
     var titre by remember { mutableStateOf("Gomoku") }
 
     Scaffold(
@@ -49,6 +55,29 @@ fun App(){
             )
         },
     ) { innerPadding ->
-        Menu(innerPadding)
+        //Menu(innerPadding)
+        NavHost(
+            navController = navController,
+            startDestination = Screens.Menu.name
+        ){
+            composable(route = Screens.Menu.name) {
+                Menu(innerPadding, navController)
+            }
+            composable(route = Screens.Sign_in.name) {
+                Sign_in(innerPadding, navController)
+            }
+            composable(route = Screens.Sign_up.name) {
+                Sign_up(innerPadding, navController)
+            }
+            composable(route = Screens.Sign_out.name) {
+                Sign_out(innerPadding, navController)
+            }
+            composable(route = Screens.Profile.name) {
+                Profile(innerPadding, navController)
+            }
+            composable(route = Screens.EditProfile.name) {
+                EditProfile(innerPadding, navController)
+            }
+        }
     }
 }
