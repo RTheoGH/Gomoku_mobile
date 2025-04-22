@@ -41,16 +41,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController){
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
-            IconButton(
-                onClick = { navController.navigate(Screens.Menu.name) },
-                modifier = Modifier.padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier.padding(4.dp)
-                )
-            }
+            Back(navController)
 
             Icon(
                 imageVector = Icons.Filled.AccountCircle,
@@ -94,16 +85,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController) {
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
-        IconButton(
-            onClick = { navController.navigate(Screens.Profile.name) },
-            modifier = Modifier.padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.padding(4.dp)
-            )
-        }
+        Back(navController)
 
         Spacer(modifier = Modifier.height(16.dp))
 

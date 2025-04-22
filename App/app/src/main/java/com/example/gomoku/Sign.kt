@@ -35,16 +35,7 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController){
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
-        IconButton(
-            onClick = { navController.navigate(Screens.Menu.name) },
-            modifier = Modifier.padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.padding(4.dp)
-            )
-        }
+        Back(navController)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -100,16 +91,7 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController){
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
-        IconButton(
-            onClick = { navController.navigate(Screens.Menu.name) },
-            modifier = Modifier.padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.padding(4.dp)
-            )
-        }
+        Back(navController)
 
         Spacer(modifier = Modifier.height(8.dp))
 

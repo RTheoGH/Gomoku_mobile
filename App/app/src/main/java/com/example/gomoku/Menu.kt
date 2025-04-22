@@ -43,13 +43,17 @@ fun Menu(pad : PaddingValues, navController: NavHostController){
             verticalAlignment = Alignment.CenterVertically
         ){
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Screens.Friends.name)
+                },
                 modifier = Modifier.padding(4.dp).padding(end = 64.dp),
             ) {
                 Text(text = stringResource(id = R.string.friends))
             }
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Screens.Leaderboard.name)
+                },
                 modifier = Modifier.padding(4.dp)
             ) {
                 Text(text = "Elo : 2000")
@@ -98,24 +102,29 @@ fun Menu(pad : PaddingValues, navController: NavHostController){
             verticalArrangement = Arrangement.Center
         ){
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Screens.Offline_lobby.name)
+                },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(id = R.string.play_offline))
             }
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Screens.Online.name)
+                },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(id = R.string.play_online))
             }
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Screens.Asynchronus.name)
+                },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(id = R.string.play_asynchronus))
             }
         }
-
     }
 }
