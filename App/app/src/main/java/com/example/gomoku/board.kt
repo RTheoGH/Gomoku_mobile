@@ -6,22 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 
 enum class CellState{
     EMPTY,
@@ -29,24 +18,20 @@ enum class CellState{
     WHITE
 }
 
-data class GomukuCell(
+data class GomokuCell(
     val x: Int,
     val y: Int,
-    val state: CellState = CellState.EMPTY
+    var state: CellState = CellState.EMPTY
 )
 
 @Composable
-fun board(){
+fun Board(
+    board: List<List<GomokuCell>>,
+    playerTurn: Int,
+    onCellClick: (x: Int, y: Int) -> Unit
+){
     val size = 15
     val cellSize = 20.dp
-
-    val board = remember {
-        mutableStateListOf<List<GomukuCell>>().apply{
-            for (i in 0 until size){
-                add(List(size){ j -> GomukuCell(i, j) })
-            }
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -58,7 +43,7 @@ fun board(){
                     val y = (offset.y / cellSize.toPx()).toInt()
 
                     if(x in 0 until size && y in 0 until size){
-                        //TODO
+                        onCellClick(x, y)
                     }
 
                 }
@@ -91,6 +76,82 @@ fun board(){
                 end = androidx.compose.ui.geometry.Offset(x = cellSize.toPx() * size, y = size * cellSize.toPx()),
                 strokeWidth = 2.dp.toPx()
             )
+
         }
     }
+}
+
+fun check_win(board: List<List<GomokuCell>>, x: Int, y: Int, size: Int): Boolean{
+    var nb_alignees = 1
+    val color:CellState = board[x][y].state
+
+    //diagonal \
+    var current_x = x-1
+    var current_y = y-1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x--
+        current_y--
+        if(nb_alignees>=5) return true
+    }
+    current_x = x+1
+    current_y = y+1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x++
+        current_y++
+        if(nb_alignees>=5) return true
+    }
+
+    //diagonal /
+    current_x = x-1
+    current_y = y+1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x--
+        current_y++
+        if(nb_alignees>=5) return true
+    }
+    current_x = x+1
+    current_y = y-1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x++
+        current_y--
+        if(nb_alignees>=5) return true
+    }
+
+    //horizontal -
+    current_x = x-1
+    current_y = y
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x--
+        if(nb_alignees>=5) return true
+    }
+    current_x = x+1
+    current_y = y
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_x++
+        if(nb_alignees>=5) return true
+    }
+
+    //vertical |
+    current_x = x
+    current_y = y+1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_y++
+        if(nb_alignees>=5) return true
+    }
+    current_x = x
+    current_y = y-1
+    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+        nb_alignees++
+        current_y--
+        if(nb_alignees>=5) return true
+    }
+
+    return false
 }
