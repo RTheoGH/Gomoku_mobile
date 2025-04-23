@@ -55,75 +55,79 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ){
             Button(
                 onClick = {
                     navController.navigate(Screens.Friends.name)
                 },
-                modifier = Modifier.padding(4.dp).padding(end = 64.dp),
-
+                modifier = Modifier.padding(4.dp)
             ) {
                 Text(text = stringResource(id = R.string.friends))
             }
-            Button(
-                onClick = {
-                    navController.navigate(Screens.Leaderboard.name)
-                },
-                modifier = Modifier.padding(4.dp)
-            ) {
-                Text(text = "Elo : $elo")
-            }
 
-            Box{
-                IconButton(
-                    onClick = { expanded = true },
-                    modifier = Modifier.padding(4.dp).size(72.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Button(
+                    onClick = {
+                        navController.navigate(Screens.Leaderboard.name)
+                    },
+                    modifier = Modifier.padding(4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Account",
-                        modifier = Modifier.size(72.dp)
-                    )
+                    Text(text = "Elo : $elo")
                 }
 
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    Log.i("TAG", "Menu: ${auth.currentUser?.email}")
-                    if(auth.currentUser != null){
-                        DropdownMenuItem(
-                            text = { Text(text = stringResource(id = R.string.profile)) },
-                            onClick = {
-                                expanded = false
-                                navController.navigate(Screens.Profile.name)
-                            }
+                Box{
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.padding(4.dp).size(72.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = "Account",
+                            modifier = Modifier.size(72.dp)
                         )
-                        DropdownMenuItem(
-                            text = { Text(text = stringResource(id = R.string.sign_out)) },
-                            onClick = {
-                                expanded = false
-                                auth.signOut()
-                                elo = 0
-                            }
-                        )
-                    }else{
-                        DropdownMenuItem(
-                            text = { Text(text = stringResource(id = R.string.sign_in)) },
-                            onClick = {
-                                expanded = false
-                                navController.navigate(Screens.Sign_in.name)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = stringResource(id = R.string.sign_up)) },
-                            onClick = {
-                                expanded = false
-                                navController.navigate(Screens.Sign_up.name)
-                            }
-                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        Log.i("TAG", "Menu: ${auth.currentUser?.email}")
+                        if(auth.currentUser != null){
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = R.string.profile)) },
+                                onClick = {
+                                    expanded = false
+                                    navController.navigate(Screens.Profile.name)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = R.string.sign_out)) },
+                                onClick = {
+                                    expanded = false
+                                    auth.signOut()
+                                    elo = 0
+                                }
+                            )
+                        }else{
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = R.string.sign_in)) },
+                                onClick = {
+                                    expanded = false
+                                    navController.navigate(Screens.Sign_in.name)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = R.string.sign_up)) },
+                                onClick = {
+                                    expanded = false
+                                    navController.navigate(Screens.Sign_up.name)
+                                }
+                            )
+                        }
                     }
                 }
             }
