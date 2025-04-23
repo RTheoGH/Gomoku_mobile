@@ -62,7 +62,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Friends.name)
                 },
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
+                enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.friends))
             }
@@ -74,7 +75,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                     onClick = {
                         navController.navigate(Screens.Leaderboard.name)
                     },
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.padding(4.dp),
+                    enabled = auth.currentUser != null
                 ) {
                     Text(text = "Elo : $elo")
                 }
@@ -152,7 +154,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Online.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
+                enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.play_online))
             }
@@ -160,7 +163,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Asynchronus.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
+                enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.play_asynchronus))
             }

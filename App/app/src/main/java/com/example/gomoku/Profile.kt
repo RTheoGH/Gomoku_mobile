@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -22,14 +21,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -97,10 +99,26 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
 }
 
 @Composable
-fun EditProfile(pad : PaddingValues, navController: NavHostController) {
+fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore) {
     var pseudo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirm_password by remember { mutableStateOf("") }
+    var new_password by remember { mutableStateOf("") }
+    var new_confirm_password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var current_user = auth.currentUser!!
+    Log.i("TAG", "Profile: ${current_user.uid}")
+
+    LaunchedEffect(current_user.uid) {
+        db.collection("users").document(current_user.uid).get()
+            .addOnSuccessListener { res ->
+                Log.i("TAG", "Profile: ${res.data}")
+                pseudo = res.data!!["pseudo"].toString()
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Profile: Error")
+            }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -116,7 +134,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController) {
         ){
             IconButton(
                 onClick = {
-                    //TODO
+                    //TODO ?
                 },
                 modifier = Modifier.padding(4.dp).size(72.dp)
             ){
@@ -130,32 +148,74 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = "",
+                value = pseudo,
                 onValueChange = { pseudo = it },
                 label = { Text(text = "Pseudonyme") },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
-                value = "",
+                value = password,
                 onValueChange = { password = it },
                 label = { Text(text = "Mot de passe") },
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
-                value = "",
-                onValueChange = { confirm_password = it },
-                label = { Text(text = "Confirmation du mot de passe") },
+                value = new_password,
+                onValueChange = { new_password = it },
+                label = { Text(text = "Nouveau mot de passe") },
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp)
             )
+
+            OutlinedTextField(
+                value = new_confirm_password,
+                onValueChange = { new_confirm_password = it },
+                label = { Text(text = "Confirmation du mot de passe") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.padding(4.dp)
+            )
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = androidx.compose.ui.graphics.Color.Red,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
                     //TODO
-                    navController.navigate(Screens.Profile.name)
+                    if(new_password == new_confirm_password){
+                        db.collection("users").document(current_user.uid).update(
+                            "pseudo", pseudo
+                        ).addOnSuccessListener {
+                            Log.i("TAG", "Profile: Pseudo updated")
+                        }.addOnFailureListener {
+                            Log.i("TAG", "Profile: Error updating pseudo")
+                        }
+                        if(new_password.isNotEmpty()){
+                            val credential = EmailAuthProvider.getCredential(current_user.email!!, password)
+                            current_user.reauthenticate(credential).addOnSuccessListener {
+                                current_user.updatePassword(new_password).addOnSuccessListener {
+                                    Log.i("TAG", "Profile: Password updated")
+                                }.addOnFailureListener {
+                                    Log.i("TAG", "Profile: Error updating password")
+                                }
+                            }
+                            .addOnFailureListener {
+                                errorMessage = "Mot de passe incorrect"
+                            }
+                        }
+                        navController.navigate(Screens.Profile.name)
+                    }else{
+                        errorMessage = "Les mots de passe ne correspondent pas"
+                    }
                 },
             ) {
                 Text(text = "Modifier les informations")

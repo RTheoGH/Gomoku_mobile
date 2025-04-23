@@ -26,7 +26,7 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
             Profile(pad, navController, auth, db)
         }
         composable(route = Screens.EditProfile.name) {
-            EditProfile(pad, navController)
+            EditProfile(pad, navController, auth, db)
         }
         composable(route = Screens.Leaderboard.name) {
             Leaderboard(pad, navController)
