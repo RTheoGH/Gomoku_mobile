@@ -1,5 +1,6 @@
 package com.example.gomoku
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,10 +30,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Menu(pad : PaddingValues, navController: NavHostController){
+fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
     var expanded by remember { mutableStateOf(false) }
+
+    var elo by remember { mutableStateOf(0) }
+    if(auth.currentUser != null){
+        db.collection("users").document(auth.currentUser!!.uid).get()
+            .addOnSuccessListener { res ->
+                Log.i("TAG", "Profile: ${res.data}")
+                elo = res.data!!["elo"].toString().toInt()
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Profile: Error")
+            }
+    }
+
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -47,6 +63,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController){
                     navController.navigate(Screens.Friends.name)
                 },
                 modifier = Modifier.padding(4.dp).padding(end = 64.dp),
+
             ) {
                 Text(text = stringResource(id = R.string.friends))
             }
@@ -56,7 +73,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController){
                 },
                 modifier = Modifier.padding(4.dp)
             ) {
-                Text(text = "Elo : 2000")
+                Text(text = "Elo : $elo")
             }
 
             Box{
@@ -75,21 +92,39 @@ fun Menu(pad : PaddingValues, navController: NavHostController){
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.sign_in)) },
-                        onClick = {
-                            expanded = false
-                            navController.navigate(Screens.Sign_in.name)
-
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.sign_up)) },
-                        onClick = {
-                            expanded = false
-                            navController.navigate(Screens.Sign_up.name)
-                        }
-                    )
+                    Log.i("TAG", "Menu: ${auth.currentUser?.email}")
+                    if(auth.currentUser != null){
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.profile)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Screens.Profile.name)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.sign_out)) },
+                            onClick = {
+                                expanded = false
+                                auth.signOut()
+                                elo = 0
+                            }
+                        )
+                    }else{
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.sign_in)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Screens.Sign_in.name)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.sign_up)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Screens.Sign_up.name)
+                            }
+                        )
+                    }
                 }
             }
         }

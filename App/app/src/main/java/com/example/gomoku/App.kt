@@ -9,10 +9,14 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
     navController: NavHostController = rememberNavController()
 ){
     Scaffold(
@@ -26,6 +30,6 @@ fun App(
             )
         },
     ) { innerPadding ->
-        Navigation(innerPadding, navController, Screens.Menu.name)
+        Navigation(innerPadding, navController, Screens.Menu.name, auth, db)
     }
 }

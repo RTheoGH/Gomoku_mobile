@@ -5,26 +5,25 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Navigation(pad : PaddingValues, navController: NavHostController, startDestination: String){
+fun Navigation(pad : PaddingValues, navController: NavHostController, startDestination: String, auth: FirebaseAuth, db: FirebaseFirestore){
     NavHost(navController = navController, startDestination = startDestination){
         composable(route = Screens.Menu.name) {
-            Menu(pad, navController)
+            Menu(pad, navController, auth, db)
         }
 
         composable(route = Screens.Sign_in.name) {
-            Sign_in(pad, navController)
+            Sign_in(pad, navController, auth, db)
         }
         composable(route = Screens.Sign_up.name) {
-            Sign_up(pad, navController)
-        }
-        composable(route = Screens.Sign_out.name) {
-            Sign_out(pad, navController)
+            Sign_up(pad, navController, auth, db)
         }
 
         composable(route = Screens.Profile.name) {
-            Profile(pad, navController)
+            Profile(pad, navController, auth, db)
         }
         composable(route = Screens.EditProfile.name) {
             EditProfile(pad, navController)

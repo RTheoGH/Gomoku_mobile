@@ -1,5 +1,6 @@
 package com.example.gomoku
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,10 +30,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Profile(pad : PaddingValues, navController: NavHostController){
+fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
     //TODO
+
+    var pseudo by remember { mutableStateOf("") }
+    var elo by remember { mutableStateOf(0) }
+
+    var current_user = auth.currentUser!!
+    Log.i("TAG", "Profile: ${current_user.uid}")
+
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener { res ->
+            Log.i("TAG", "Profile: ${res.data}")
+            pseudo = res.data!!["pseudo"].toString()
+            elo = res.data!!["elo"].toString().toInt()
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error")
+        }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
@@ -68,8 +88,8 @@ fun Profile(pad : PaddingValues, navController: NavHostController){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Pseudo : TODO")
-            Text(text = "Elo : TODO")
+            Text(text = "Pseudo : $pseudo")
+            Text(text = "Elo : $elo")
 
             //TODO
         }
