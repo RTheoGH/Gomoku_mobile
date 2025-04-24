@@ -28,10 +28,10 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         composable(route = Screens.EditProfile.name) {
             EditProfile(pad, navController, auth, db)
         }
-        composable(route = Screens.Leaderboard.name) {
-            Leaderboard(pad, navController)
-        }
 
+        composable(route = Screens.Leaderboard.name) {
+            Leaderboard(pad, navController, auth, db)
+        }
         composable(route = Screens.Friends.name) {
             Friends(pad, navController)
         }

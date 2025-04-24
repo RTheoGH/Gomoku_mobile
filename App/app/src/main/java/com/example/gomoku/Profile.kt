@@ -1,7 +1,6 @@
 package com.example.gomoku
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
@@ -90,10 +90,18 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Pseudo : $pseudo")
-            Text(text = "Elo : $elo")
+            Text(text = "Pseudonyme")
+            Custom_card(pseudo)
+            Text(text = "Elo")
+            Custom_card(elo.toString())
 
-            //TODO
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            //TODO : Afficher les parties jouées
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {  }
         }
     }
 }
@@ -190,7 +198,6 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
 
             Button(
                 onClick = {
-                    //TODO
                     if(new_password == new_confirm_password){
                         db.collection("users").document(current_user.uid).update(
                             "pseudo", pseudo

@@ -119,5 +119,3 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
         }
     }
 }
-
-
