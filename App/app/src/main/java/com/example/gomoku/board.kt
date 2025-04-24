@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 
 enum class CellState{
@@ -76,7 +77,22 @@ fun Board(
                 end = androidx.compose.ui.geometry.Offset(x = cellSize.toPx() * size, y = size * cellSize.toPx()),
                 strokeWidth = 2.dp.toPx()
             )
-
+            for (x in 0 until size) {
+                for (y in 0 until size) {
+                    val cell = board[x][y]
+                    val state = cell.state
+                    if (state != CellState.EMPTY) {
+                        drawCircle(
+                            color = if (state == CellState.BLACK) Color.Black else Color.White,
+                            radius = (cellSize.toPx() / 2.5f),
+                            center = Offset(
+                                x = x * cellSize.toPx() + cellSize.toPx() / 2,
+                                y = y * cellSize.toPx() + cellSize.toPx() / 2
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -86,70 +102,70 @@ fun check_win(board: List<List<GomokuCell>>, x: Int, y: Int, size: Int): Boolean
     val color:CellState = board[x][y].state
 
     //diagonal \
-    var current_x = x-1
-    var current_y = y-1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    var currentX = x-1
+    var currentY = y-1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x--
-        current_y--
+        currentX--
+        currentY--
         if(nb_alignees>=5) return true
     }
-    current_x = x+1
-    current_y = y+1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x+1
+    currentY = y+1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x++
-        current_y++
+        currentX++
+        currentY++
         if(nb_alignees>=5) return true
     }
 
     //diagonal /
-    current_x = x-1
-    current_y = y+1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x-1
+    currentY = y+1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x--
-        current_y++
+        currentX--
+        currentY++
         if(nb_alignees>=5) return true
     }
-    current_x = x+1
-    current_y = y-1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x+1
+    currentY = y-1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x++
-        current_y--
+        currentX++
+        currentY--
         if(nb_alignees>=5) return true
     }
 
     //horizontal -
-    current_x = x-1
-    current_y = y
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x-1
+    currentY = y
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x--
+        currentX--
         if(nb_alignees>=5) return true
     }
-    current_x = x+1
-    current_y = y
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x+1
+    currentY = y
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_x++
+        currentX++
         if(nb_alignees>=5) return true
     }
 
     //vertical |
-    current_x = x
-    current_y = y+1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x
+    currentY = y+1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_y++
+        currentY++
         if(nb_alignees>=5) return true
     }
-    current_x = x
-    current_y = y-1
-    while(current_x in 0..<size && current_y in 0..<size && board[current_x][current_y].state == color){
+    currentX = x
+    currentY = y-1
+    while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
         nb_alignees++
-        current_y--
+        currentY--
         if(nb_alignees>=5) return true
     }
 
