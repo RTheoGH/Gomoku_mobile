@@ -120,6 +120,7 @@ fun check_win(board: List<List<GomokuCell>>, x: Int, y: Int, size: Int): Boolean
     }
 
     //diagonal /
+    nb_alignees = 1
     currentX = x-1
     currentY = y+1
     while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
@@ -138,6 +139,7 @@ fun check_win(board: List<List<GomokuCell>>, x: Int, y: Int, size: Int): Boolean
     }
 
     //horizontal -
+    nb_alignees = 1
     currentX = x-1
     currentY = y
     while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){
@@ -154,6 +156,7 @@ fun check_win(board: List<List<GomokuCell>>, x: Int, y: Int, size: Int): Boolean
     }
 
     //vertical |
+    nb_alignees = 1
     currentX = x
     currentY = y+1
     while(currentX in 0..<size && currentY in 0..<size && board[currentX][currentY].state == color){

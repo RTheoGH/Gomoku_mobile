@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -79,6 +82,7 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
 fun Offline_game(pad : PaddingValues, navController: NavHostController){
     val size = 15
     var playerTurn by remember { mutableIntStateOf(0) }
+    var isFinished by remember { mutableStateOf(false) }
     var board = remember {
         mutableStateListOf<List<GomokuCell>>().apply{
             for (i in 0 until size){
@@ -87,6 +91,10 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
         }
     }
     var turn_history = remember { mutableStateListOf("Début de la partie") }
+    val listState = rememberLazyListState()
+    LaunchedEffect(turn_history.size) {
+        listState.animateScrollToItem(turn_history.size - 1)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -105,17 +113,19 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
                 board = board,
                 playerTurn = playerTurn,
                 onCellClick = { x, y ->
-                    if (board[x][y].state == CellState.EMPTY) {
+                    if (board[x][y].state == CellState.EMPTY && !isFinished) {
                         val newState = if (playerTurn == 0) CellState.BLACK else CellState.WHITE
                         board[x] = board[x].toMutableList().apply {
                             this[y] = board[x][y].copy(state = newState)
                         }
-                        var player = if(playerTurn == 0) "Joueur 1" else "Joueur 2"
+                        val player = if(playerTurn == 0) "Joueur 1" else "Joueur 2"
                         turn_history.add("$player a joué en $x, $y.")
                         println(turn_history)
 
                         if (check_win(board, x, y, size)) {
+                            isFinished = true
                             println("gagné !!!!!!")
+                            //TODO : enregistrer la partie dans l'historique
                         }
 
                         playerTurn = 1 - playerTurn
@@ -124,9 +134,17 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
                 }
             )
             Custom_row(2,"02:00","Joueur 2")
-            LazyColumn(modifier = Modifier.background(Color.LightGray).fillMaxWidth()) {
+            Spacer(modifier = Modifier.padding(vertical = 30.dp))
+            LazyColumn(state = listState, modifier = Modifier.background(Color.LightGray).fillMaxWidth().padding(vertical = 10.dp)) {
                 items(turn_history){ turn ->
                     Text(modifier = Modifier.padding(horizontal = 5.dp), text = turn)
+                }
+                if (isFinished){
+                    item {
+                        val player = if(playerTurn == 1) "Joueur 1" else "Joueur 2"
+                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = "$player a gagné la partie !")
+                    }
+
                 }
             }
         }
