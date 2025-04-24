@@ -1,6 +1,7 @@
 package com.example.gomoku
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -37,7 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
-    //TODO
+    //TODO : Meilleur visuel
 
     var pseudo by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
@@ -108,11 +110,18 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
 @Composable
 fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore) {
+    val context = LocalContext.current
+
     var pseudo by remember { mutableStateOf("") }
+    var current_pseudo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var new_password by remember { mutableStateOf("") }
     var new_confirm_password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val short_password_error = password.isNotEmpty() && password.length < 6
+
+    var pseudo_edit by remember { mutableStateOf(false) }
+    var password_edit by remember { mutableStateOf(false) }
 
     var current_user = auth.currentUser!!
     Log.i("TAG", "Profile: ${current_user.uid}")
@@ -122,6 +131,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             .addOnSuccessListener { res ->
                 Log.i("TAG", "Profile: ${res.data}")
                 pseudo = res.data!!["pseudo"].toString()
+                current_pseudo = pseudo
             }
             .addOnFailureListener {
                 Log.i("TAG", "Profile: Error")
@@ -167,7 +177,13 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                 onValueChange = { password = it },
                 label = { Text(text = "Mot de passe") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
+                isError = short_password_error,
+                supportingText = {
+                    if (short_password_error) {
+                        Text("Le mot de passe doit contenir au moins 6 caractères")
+                    }
+                }
             )
 
             OutlinedTextField(
@@ -175,7 +191,8 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                 onValueChange = { new_password = it },
                 label = { Text(text = "Nouveau mot de passe") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
+
             )
 
             OutlinedTextField(
@@ -199,27 +216,62 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             Button(
                 onClick = {
                     if(new_password == new_confirm_password){
-                        db.collection("users").document(current_user.uid).update(
-                            "pseudo", pseudo
-                        ).addOnSuccessListener {
-                            Log.i("TAG", "Profile: Pseudo updated")
-                        }.addOnFailureListener {
-                            Log.i("TAG", "Profile: Error updating pseudo")
+                        var pseudo_edit_done = false
+                        var password_edit_done = false
+
+                        val modifs = {
+                            if(pseudo_edit && password_edit){
+                                Toast.makeText(context, "Pseudo et mot de passe modifiés", Toast.LENGTH_SHORT).show()
+                            }else if(pseudo_edit){
+                                Toast.makeText(context, "Pseudo modifié", Toast.LENGTH_SHORT).show()
+                            }else if(password_edit){
+                                Toast.makeText(context, "Mot de passe modifié", Toast.LENGTH_SHORT).show()
+                            }
+                            navController.navigate(Screens.Profile.name)
                         }
-                        if(new_password.isNotEmpty()){
-                            val credential = EmailAuthProvider.getCredential(current_user.email!!, password)
-                            current_user.reauthenticate(credential).addOnSuccessListener {
-                                current_user.updatePassword(new_password).addOnSuccessListener {
-                                    Log.i("TAG", "Profile: Password updated")
-                                }.addOnFailureListener {
-                                    Log.i("TAG", "Profile: Error updating password")
+
+                        db.collection("users").whereEqualTo("pseudo", pseudo).get().addOnSuccessListener { res ->
+                            val is_pseudo_taken = res.documents.any { it.id != current_user.uid }
+                            if (is_pseudo_taken) {
+                                errorMessage = "Pseudonyme déjà utilisé"
+                            }else{
+                                if(pseudo != current_pseudo){
+                                    db.collection("users").document(current_user.uid).update(
+                                        "pseudo", pseudo
+                                    ).addOnSuccessListener {
+                                        Log.i("TAG", "Profile: Pseudo updated")
+                                        pseudo_edit = true
+                                        pseudo_edit_done = true
+                                        if(password_edit_done || new_password.isEmpty()) modifs()
+                                    }.addOnFailureListener {
+                                        Log.i("TAG", "Profile: Error updating pseudo")
+                                    }
+                                }else{
+                                    pseudo_edit_done = true
+                                    if(password_edit_done || new_password.isEmpty()) modifs()
+                                }
+                                if(new_password.isNotEmpty()){
+                                    val credential = EmailAuthProvider.getCredential(current_user.email!!, password)
+                                    current_user.reauthenticate(credential).addOnSuccessListener {
+                                        current_user.updatePassword(new_password).addOnSuccessListener {
+                                            Log.i("TAG", "Profile: Password updated")
+                                            password_edit = true
+                                            password_edit_done = true
+                                            if(pseudo_edit_done) modifs()
+                                        }.addOnFailureListener {
+                                            Log.i("TAG", "Profile: Error updating password")
+                                            errorMessage = "Erreur lors de la modification du mot de passe"
+                                        }
+                                    }
+                                        .addOnFailureListener {
+                                            errorMessage = "Mot de passe incorrect"
+                                        }
+                                }else{
+                                    password_edit_done = true
+                                    if(pseudo_edit_done) modifs()
                                 }
                             }
-                            .addOnFailureListener {
-                                errorMessage = "Mot de passe incorrect"
-                            }
                         }
-                        navController.navigate(Screens.Profile.name)
                     }else{
                         errorMessage = "Les mots de passe ne correspondent pas"
                     }
