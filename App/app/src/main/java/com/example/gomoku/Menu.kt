@@ -39,6 +39,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
 
     var elo by remember { mutableStateOf(0) }
     if(auth.currentUser != null){
+        Log.i("TAG", "Current user: ${auth.currentUser!!.uid}")
         db.collection("users").document(auth.currentUser!!.uid).get()
             .addOnSuccessListener { res ->
                 Log.i("TAG", "Profile: ${res.data}")

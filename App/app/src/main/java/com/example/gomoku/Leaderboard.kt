@@ -29,11 +29,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Leaderboard(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: FirebaseFirestore){
     var leaderboard by remember { mutableStateOf(listOf<User>()) }
 
     LaunchedEffect(Unit) {

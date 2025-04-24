@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
@@ -125,6 +126,8 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
     var password by remember { mutableStateOf("") }
     var confirm_password by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val short_password_error = password.isNotEmpty() && password.length < 6
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -172,7 +175,13 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 onValueChange = { password = it },
                 label = { Text(text = "Mot de passe") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
+                isError = short_password_error,
+                supportingText = {
+                    if (short_password_error) {
+                        Text("Le mot de passe doit contenir au moins 6 caractères")
+                    }
+                }
             )
 
             OutlinedTextField(
@@ -183,35 +192,56 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 modifier = Modifier.padding(4.dp)
             )
 
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = androidx.compose.ui.graphics.Color.Red,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    //TODO
-                    if(password == confirm_password){
-                        auth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { authTask ->
-                                if (authTask.isSuccessful) {
-                                    Log.i("TAG", "createUserWithEmailAndPassword:success : ${auth.currentUser!!.uid}")
-                                    val user = User(
-                                        email = email,
-                                        pseudo = pseudo,
-                                        elo = 1000
-                                    )
+                    if(password == confirm_password) {
+                        db.collection("users").whereEqualTo("pseudo", pseudo).get().addOnSuccessListener { res ->
+                            if (!res.isEmpty) {
+                                errorMessage = "Pseudonyme déjà utilisé"
+                            } else {
+                                auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { authTask ->
+                                    if (authTask.isSuccessful) {
+                                        Log.i("TAG", "createUserWithEmailAndPassword:success : ${auth.currentUser!!.uid}")
+                                        val user = User(
+                                            email = email,
+                                            pseudo = pseudo,
+                                            elo = 1000
+                                        )
 
-                                    db.collection("users").document(auth.currentUser!!.uid)
-                                        .set(user).addOnCompleteListener { dbTask ->
-                                            if (dbTask.isSuccessful) {
-                                                Log.i("TAG", "DocumentSnapshot added with ID: ${auth.currentUser!!.uid}")
-                                                navController.navigate(Screens.Profile.name)
-                                            } else {
-                                                Log.i("TAG", "Error adding document", dbTask.exception)
+                                        db.collection("users")
+                                            .document(auth.currentUser!!.uid)
+                                            .set(user).addOnCompleteListener { dbTask ->
+                                                if (dbTask.isSuccessful) {
+                                                    Log.i("TAG", "DocumentSnapshot added with ID: ${auth.currentUser!!.uid}")
+                                                    navController.navigate(Screens.Profile.name)
+                                                } else {
+                                                    Log.i("TAG", "Error adding document", dbTask.exception)
+                                                    errorMessage = "Erreur lors de la création du profil"
+                                                }
                                             }
-                                        }
+                                    }
+                                }
+                                .addOnFailureListener { e ->
+                                    if (e is FirebaseAuthUserCollisionException) {
+                                        errorMessage = "Email déjà utilisé"
+                                    } else {
+                                        errorMessage = "Erreur lors de la création du compte"
+                                    }
                                 }
                             }
-                    }else{
-                        //TODO
+                        }
+                    } else {
+                        errorMessage = "Les mots de passe ne correspondent pas"
                     }
                 },
             ) {
