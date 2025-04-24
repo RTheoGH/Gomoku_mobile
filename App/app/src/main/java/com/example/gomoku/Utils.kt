@@ -1,9 +1,11 @@
 package com.example.gomoku
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -17,17 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Back(navController: NavHostController){
     IconButton(
         onClick = { navController.navigate(Screens.Menu.name) },
-        modifier = Modifier.padding(4.dp)
+        modifier = Modifier.padding(4.dp).size(32.dp)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back",
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier.padding(4.dp).size(32.dp)
         )
     }
 }
@@ -69,4 +73,18 @@ fun Custom_card(text : String){
             textAlign = TextAlign.Center
         )
     }
+}
+
+fun recup_moi(auth: FirebaseAuth, db: FirebaseFirestore, onRes : (String) -> Unit) {
+    var current_user = auth.currentUser ?: return onRes("")
+
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener { res ->
+            val pseudo = res.getString("pseudo") ?: ""
+            onRes(pseudo)
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error")
+            onRes("")
+        }
 }

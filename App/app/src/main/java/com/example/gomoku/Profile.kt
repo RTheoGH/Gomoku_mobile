@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -38,20 +39,21 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?){
     //TODO : Meilleur visuel
 
     var pseudo by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
 
-    var current_user = auth.currentUser!!
-    Log.i("TAG", "Profile: ${current_user.uid}")
+    var isMe by remember { mutableStateOf(false) }
+    recup_moi(auth,db){
+        isMe = it == p
+    }
 
-    db.collection("users").document(current_user.uid).get()
+    db.collection("users").whereEqualTo("pseudo", p).get()
         .addOnSuccessListener { res ->
-            Log.i("TAG", "Profile: ${res.data}")
-            pseudo = res.data!!["pseudo"].toString()
-            elo = res.data!!["elo"].toString().toInt()
+            pseudo = res.documents.first().data!!["pseudo"].toString()
+            elo = res.documents.first().data!!["elo"].toString().toInt()
         }
         .addOnFailureListener {
             Log.i("TAG", "Profile: Error")
@@ -73,15 +75,19 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 modifier = Modifier.padding(4.dp).size(72.dp)
             )
 
-            IconButton(
-                onClick = { navController.navigate(Screens.EditProfile.name) },
-                modifier = Modifier.padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit",
-                    modifier = Modifier.padding(4.dp)
-                )
+            if(isMe) {
+                IconButton(
+                    onClick = { navController.navigate(Screens.EditProfile.name) },
+                    modifier = Modifier.padding(4.dp).size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Edit",
+                        modifier = Modifier.padding(4.dp).size(32.dp)
+                    )
+                }
+            }else{
+                Spacer(modifier = Modifier.padding(4.dp).width(32.dp))
             }
         }
 

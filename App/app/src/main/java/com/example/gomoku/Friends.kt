@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
@@ -27,7 +28,10 @@ fun Friends(pad : PaddingValues, navController: NavHostController){
         Back(navController)
 
         if(friends.isEmpty()){
-            Text(text = "Aucun ami")
+            Text(
+                text = "Aucun ami :(",
+                textAlign = TextAlign.Center
+            )
         }
 
         LazyColumn(

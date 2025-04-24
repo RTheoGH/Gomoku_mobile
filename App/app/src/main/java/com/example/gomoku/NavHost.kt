@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -22,8 +23,12 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
             Sign_up(pad, navController, auth, db)
         }
 
-        composable(route = Screens.Profile.name) {
-            Profile(pad, navController, auth, db)
+        composable(
+            route = "${Screens.Profile.name}/{pseudo}",
+            arguments = listOf(navArgument("pseudo") { nullable = false })
+        ) { backStackEntry ->
+            val pseudo = backStackEntry.arguments?.getString("pseudo") ?: ""
+            Profile(pad, navController, auth, db, pseudo)
         }
         composable(route = Screens.EditProfile.name) {
             EditProfile(pad, navController, auth, db)

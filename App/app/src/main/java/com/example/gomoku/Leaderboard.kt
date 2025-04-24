@@ -92,7 +92,10 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
                     Text(
                         text = user.pseudo,
                         fontSize = 20.sp,
-                        modifier = Modifier.weight(1f).clickable { /*TODO : Afficher le profil de l'utilisateur*/ }
+                        modifier = Modifier.weight(1f).clickable {
+                            /*TODO : Afficher le profil de l'utilisateur*/
+                            navController.navigate("${Screens.Profile.name}/${user.pseudo}")
+                        }
                     )
 
                     Text(
