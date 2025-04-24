@@ -1,5 +1,7 @@
 package com.example.gomoku
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
@@ -69,6 +74,7 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
     }
 }
 
+@SuppressLint("MutableCollectionMutableState")
 @Composable
 fun Offline_game(pad : PaddingValues, navController: NavHostController){
     val size = 15
@@ -80,6 +86,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
             }
         }
     }
+    var turn_history = remember { mutableStateListOf("Début de la partie") }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -103,8 +110,9 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
                         board[x] = board[x].toMutableList().apply {
                             this[y] = board[x][y].copy(state = newState)
                         }
-
-                        println(board[x][y])
+                        var player = if(playerTurn == 0) "Joueur 1" else "Joueur 2"
+                        turn_history.add("$player a joué en $x, $y.")
+                        println(turn_history)
 
                         if (check_win(board, x, y, size)) {
                             println("gagné !!!!!!")
@@ -116,6 +124,11 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
                 }
             )
             Custom_row(2,"02:00","Joueur 2")
+            LazyColumn(modifier = Modifier.background(Color.LightGray).fillMaxWidth()) {
+                items(turn_history){ turn ->
+                    Text(modifier = Modifier.padding(horizontal = 5.dp), text = turn)
+                }
+            }
         }
     }
 }
