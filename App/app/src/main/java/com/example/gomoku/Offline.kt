@@ -1,6 +1,7 @@
 package com.example.gomoku
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -52,15 +54,15 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             Text("Mode : Offline")
 
             OutlinedTextField(
-                value = "",
-                onValueChange = { player1 = it },
+                value = player1,
+                onValueChange = { if(it.length <= 10) player1 = it },
                 label = { Text(text = "Joueur 1") },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
-                value = "",
-                onValueChange = { player2 = it },
+                value = player2,
+                onValueChange = { if(it.length <= 10) player2 = it },
                 label = { Text(text = "Joueur 2") },
                 modifier = Modifier.padding(4.dp)
             )
@@ -68,7 +70,8 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             Button(
                 onClick = {
                     //TODO
-                    navController.navigate(Screens.Offline_game.name)
+                    val route = "${Screens.Offline_game.name}/$player1/$player2"
+                    navController.navigate(route)
                 },
             ){
                 Text(text = "Jouer")
@@ -79,7 +82,10 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun Offline_game(pad : PaddingValues, navController: NavHostController){
+fun Offline_game(pad : PaddingValues, navController: NavHostController, player1: String, player2: String){
+    Log.i("TAG", "Offline_game: $player1, $player2")
+    var showDialog by remember { mutableStateOf(false) }
+
     val size = 15
     var playerTurn by remember { mutableIntStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
@@ -108,22 +114,24 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Custom_row(1,"02:00","Joueur 1")
+            Custom_row(1,"",player2)
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
             Board(
                 board = board,
                 playerTurn = playerTurn,
                 onCellClick = { x, y ->
                     if (board[x][y].state == CellState.EMPTY && !isFinished) {
-                        val newState = if (playerTurn == 0) CellState.BLACK else CellState.WHITE
+                        val newState = if (playerTurn == 0) CellState.WHITE else CellState.BLACK
                         board[x] = board[x].toMutableList().apply {
                             this[y] = board[x][y].copy(state = newState)
                         }
-                        val player = if(playerTurn == 0) "Joueur 1" else "Joueur 2"
+                        val player = if(playerTurn == 0) player1 else player2
                         turn_history.add("$player a joué en $x, $y.")
                         println(turn_history)
 
                         if (check_win(board, x, y, size)) {
                             isFinished = true
+                            showDialog = true
                             println("gagné !!!!!!")
                             //TODO : enregistrer la partie dans l'historique
                         }
@@ -133,19 +141,55 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController){
                     }
                 }
             )
-            Custom_row(2,"02:00","Joueur 2")
-            Spacer(modifier = Modifier.padding(vertical = 30.dp))
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+            Custom_row(2,"",player1)
+
+            Spacer(modifier = Modifier.padding(vertical = 16.dp))
+
             LazyColumn(state = listState, modifier = Modifier.background(Color.LightGray).fillMaxWidth().padding(vertical = 10.dp)) {
                 items(turn_history){ turn ->
                     Text(modifier = Modifier.padding(horizontal = 5.dp), text = turn)
                 }
                 if (isFinished){
                     item {
-                        val player = if(playerTurn == 1) "Joueur 1" else "Joueur 2"
+                        val player = if(playerTurn == 1) player1 else player2
                         Text(modifier = Modifier.padding(horizontal = 5.dp), text = "$player a gagné la partie !")
                     }
-
                 }
+            }
+
+            if(showDialog){
+                val winner = if(playerTurn == 1) player1 else player2
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text(text = "Partie terminée") },
+                    text = { Text(text = "$winner a gagné la partie !") },
+                    confirmButton = {
+                        Button(onClick = {
+                            showDialog = false
+                            val route = "${Screens.Offline_game.name}/$player1/$player2"
+                            navController.navigate(route){
+                                popUpTo(route){
+                                    inclusive = true
+                                }
+                            }
+                        }) {
+                            Text(text = "Rejouer")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialog = false
+                            navController.navigate(Screens.Menu.name){
+                                popUpTo(Screens.Menu.name){
+                                    inclusive = true
+                                }
+                            }
+                        }) {
+                            Text(text = "Quitter")
+                        }
+                    }
+                )
             }
         }
     }

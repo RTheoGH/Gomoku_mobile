@@ -40,7 +40,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?){
-    //TODO : Meilleur visuel
+    //TODO : Meilleur visuel ?
 
     var pseudo by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
@@ -123,6 +123,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
     var password by remember { mutableStateOf("") }
     var new_password by remember { mutableStateOf("") }
     var new_confirm_password by remember { mutableStateOf("") }
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val short_password_error = password.isNotEmpty() && password.length < 6
 
@@ -173,7 +174,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
 
             OutlinedTextField(
                 value = pseudo,
-                onValueChange = { pseudo = it },
+                onValueChange = { if(it.length <= 16) pseudo = it },
                 label = { Text(text = "Pseudonyme") },
                 modifier = Modifier.padding(4.dp)
             )
@@ -198,7 +199,6 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                 label = { Text(text = "Nouveau mot de passe") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp),
-
             )
 
             OutlinedTextField(

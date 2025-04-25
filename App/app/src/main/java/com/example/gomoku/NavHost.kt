@@ -44,8 +44,16 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         composable(route = Screens.Offline_lobby.name) {
             Offline_lobby(pad, navController)
         }
-        composable(route = Screens.Offline_game.name) {
-            Offline_game(pad, navController)
+        composable(
+            route = "${Screens.Offline_game.name}/{player1}/{player2}",
+            arguments = listOf(
+                navArgument("player1") { nullable = false },
+                navArgument("player2") { nullable = false }
+            )
+        ) { backStackEntry ->
+            val player1 = backStackEntry.arguments?.getString("player1") ?: ""
+            val player2 = backStackEntry.arguments?.getString("player2") ?: ""
+            Offline_game(pad, navController, player1 = player1, player2 = player2)
         }
 
         composable(route = Screens.Online.name) {

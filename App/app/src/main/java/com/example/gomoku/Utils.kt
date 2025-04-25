@@ -1,8 +1,11 @@
 package com.example.gomoku
 
 import android.util.Log
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,7 +18,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -38,22 +43,49 @@ fun Back(navController: NavHostController){
 
 @Composable
 fun Custom_row(i : Int, timer : String, player : String){
-    // TODO : remember players name & update timers
     Row(
-        modifier = if(i == 1) Modifier.fillMaxWidth().padding(end = 16.dp)
-        else if(i == 2) Modifier.fillMaxWidth().padding(start = 16.dp)
-        else Modifier.fillMaxWidth(),
-        horizontalArrangement = if(i == 1) Arrangement.End
-        else if(i == 2) Arrangement.Start
-        else Arrangement.Center,
+        modifier = when (i) {
+            1 -> Modifier.fillMaxWidth().padding(end = 48.dp)
+            2 -> Modifier.fillMaxWidth().padding(start = 48.dp)
+            else -> Modifier.fillMaxWidth()
+        },
+        horizontalArrangement = when(i) {
+            1 -> Arrangement.End
+            2 -> Arrangement.Start
+            else -> Arrangement.Center
+        },
+        verticalAlignment = Alignment.CenterVertically
     ){
-        if(i == 1){
-            Custom_card(timer)
-            Custom_card(player)
-        }
-        else if(i == 2){
-            Custom_card(player)
-            Custom_card(timer)
+        when (i) {
+            1 -> {
+                if(timer != "") Custom_card(timer)
+                Custom_card(player)
+                Canvas(modifier = Modifier.size(30.dp).padding(4.dp)){
+                    drawCircle(
+                        color = Color.Black,
+                        radius = size.minDimension / 2
+                    )
+                    drawCircle(
+                        color = Color.Black,
+                        radius = size.minDimension / 2 - 2.dp.toPx()
+                    )
+                }
+            }
+
+            2 -> {
+                Canvas(modifier = Modifier.size(30.dp).padding(4.dp)){
+                    drawCircle(
+                        color = Color.Black,
+                        radius = size.minDimension / 2
+                    )
+                    drawCircle(
+                        color = Color.White,
+                        radius = size.minDimension / 2 - 2.dp.toPx()
+                    )
+                }
+                Custom_card(player)
+                if(timer != "") Custom_card(timer)
+            }
         }
     }
 }
