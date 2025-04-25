@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.nav
 
 enum class Screens {
     Menu,

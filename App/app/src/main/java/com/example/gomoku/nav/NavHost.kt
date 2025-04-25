@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.nav
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -6,6 +6,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.gomoku.user.EditProfile
+import com.example.gomoku.user.Friends
+import com.example.gomoku.user.Leaderboard
+import com.example.gomoku.Menu
+import com.example.gomoku.user.Profile
+import com.example.gomoku.user.Sign_in
+import com.example.gomoku.user.Sign_up
+import com.example.gomoku.game.Asynchronus
+import com.example.gomoku.game.Asynchronus_create
+import com.example.gomoku.game.Asynchronus_game
+import com.example.gomoku.game.Asynchronus_join
+import com.example.gomoku.game.Asynchronus_lobby
+import com.example.gomoku.game.Offline_game
+import com.example.gomoku.game.Offline_lobby
+import com.example.gomoku.game.Online
+import com.example.gomoku.game.Online_create
+import com.example.gomoku.game.Online_game
+import com.example.gomoku.game.Online_join
+import com.example.gomoku.game.Online_lobby
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 

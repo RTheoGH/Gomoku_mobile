@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.user
 
 data class User(
     val email: String,
