@@ -244,7 +244,8 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                             .set(user).addOnCompleteListener { dbTask ->
                                                 if (dbTask.isSuccessful) {
                                                     Log.i("TAG", "DocumentSnapshot added with ID: ${auth.currentUser!!.uid}")
-                                                    navController.navigate(Screens.Profile.name)
+                                                    //navController.navigate(Screens.Profile.name)
+                                                    navController.navigate("${Screens.Profile.name}/${user.pseudo}")
                                                 } else {
                                                     Log.i("TAG", "Error adding document", dbTask.exception)
                                                     errorMessage = "Erreur lors de la création du profil"
