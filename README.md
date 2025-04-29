@@ -7,8 +7,8 @@
 [![Figma](https://img.shields.io/badge/Figma-F24E1E?logo=figma&logoColor=white)](#)
 
 ## Projet réalisé par
-- Reynier Théo
-- Viguier Killian
+- Reynier Théo - M1 IMAGINE - 22008945
+- Viguier Killian - M1 IMAGINE - 22011024
 
 ---
 ## Description
