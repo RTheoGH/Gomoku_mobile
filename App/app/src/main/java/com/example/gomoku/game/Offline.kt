@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.game
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
@@ -32,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.gomoku.Back
+import com.example.gomoku.Custom_row
+import com.example.gomoku.nav.Screens
 
 @Composable
 fun Offline_lobby(pad : PaddingValues, navController: NavHostController){

@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.game
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.gomoku.Back
 
 @Composable
 fun Asynchronus(pad : PaddingValues, navController: NavHostController){

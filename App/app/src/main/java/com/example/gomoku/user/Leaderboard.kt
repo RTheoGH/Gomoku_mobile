@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.user
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.gomoku.Back
+import com.example.gomoku.nav.Screens
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable

@@ -1,4 +1,4 @@
-package com.example.gomoku
+package com.example.gomoku.user
 
 import android.util.Log
 import android.widget.Toast
@@ -34,6 +34,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.gomoku.Back
+import com.example.gomoku.Custom_card
+import com.example.gomoku.nav.Screens
+import com.example.gomoku.recup_moi
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
