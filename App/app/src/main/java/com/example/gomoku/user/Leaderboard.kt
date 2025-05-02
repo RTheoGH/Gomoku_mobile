@@ -44,7 +44,9 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
                     val pseudo = doc.data?.get("pseudo").toString()
                     val email = doc.data?.get("email").toString()
                     val elo = doc.data?.get("elo")
-                    User(email, pseudo, elo.toString().toInt())
+                    val friends = doc.data?.get("friends") as List<String>
+                    val requests = doc.data?.get("requests") as List<String>
+                    User(email, pseudo, elo.toString().toInt(), friends, requests)
                 }
                 leaderboard = users
             }
@@ -95,7 +97,6 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
                         text = user.pseudo,
                         fontSize = 20.sp,
                         modifier = Modifier.weight(1f).clickable {
-                            /*TODO : Afficher le profil de l'utilisateur*/
                             navController.navigate("${Screens.Profile.name}/${user.pseudo}")
                         }
                     )

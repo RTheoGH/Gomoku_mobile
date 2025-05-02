@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -40,11 +41,14 @@ import com.example.gomoku.nav.Screens
 import com.example.gomoku.recup_moi
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?){
     //TODO : Meilleur visuel ?
+
+    var erreur by remember { mutableStateOf("") }
 
     var pseudo by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
@@ -107,6 +111,55 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             Text(text = "Elo")
             Custom_card(elo.toString())
 
+            if(!isMe){
+                IconButton(
+                    onClick = {
+                        val current_user = auth.currentUser!!
+
+                        //friend_request()
+
+                        db.collection("users").document(current_user.uid).get()
+                            .addOnSuccessListener { res ->
+                                val current_p = res.data!!["pseudo"].toString()
+
+                                db.collection("users").whereEqualTo("pseudo", p).get()
+                                    .addOnSuccessListener { res2 ->
+                                        if (res2.documents.isNotEmpty()) {
+                                            val target = res2.documents.first().id
+
+                                            db.collection("users")
+                                                .document(target)
+                                                .update(
+                                                    "requests",
+                                                    FieldValue.arrayUnion(current_p)
+                                                )
+                                                .addOnSuccessListener {
+                                                    Log.i("TAG", "Profile: Request sent")
+                                                }
+                                                .addOnFailureListener {
+                                                    Log.i("TAG", "Profile: Error sending request")
+
+                                                }
+                                        } else {
+                                            Log.i("TAG", "Profile: User not found")
+                                            erreur = "Utilisateur introuvable"
+                                        }
+
+                                    }
+                            }
+                    },
+                    modifier = Modifier.padding(4.dp).size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier.padding(4.dp).size(32.dp)
+                    )
+                    Text(text = "Ajouter en ami")
+                }
+            }
+
+            Text(text = erreur)
 
             Spacer(modifier = Modifier.height(32.dp))
 

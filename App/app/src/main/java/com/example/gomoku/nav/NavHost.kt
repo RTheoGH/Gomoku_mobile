@@ -57,7 +57,7 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
             Leaderboard(pad, navController, db)
         }
         composable(route = Screens.Friends.name) {
-            Friends(pad, navController)
+            Friends(pad, navController, auth, db)
         }
 
         composable(route = Screens.Offline_lobby.name) {

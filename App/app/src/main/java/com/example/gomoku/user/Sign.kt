@@ -236,7 +236,9 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                         val user = User(
                                             email = email,
                                             pseudo = pseudo,
-                                            elo = 1000
+                                            elo = 1000,
+                                            requests = listOf(),
+                                            friends = listOf()
                                         )
 
                                         db.collection("users")
