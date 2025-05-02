@@ -1,14 +1,18 @@
 package com.example.gomoku
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -20,7 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
@@ -118,4 +124,57 @@ fun recup_moi(auth: FirebaseAuth, db: FirebaseFirestore, onRes : (String) -> Uni
             Log.i("TAG", "Profile: Error")
             onRes("")
         }
+}
+
+@Composable
+fun Recup_request(request : String){
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Color.LightGray),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ){
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            Text(
+                text = request,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f).padding(start = 8.dp, end = 16.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row{
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Accepter",
+                        tint = Color(0xFF4CAF50)
+                    )
+                }
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = "Refuser",
+                        tint = Color(0xFFF44336)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Recup_friend(friend : String){
+    // TODO
 }
