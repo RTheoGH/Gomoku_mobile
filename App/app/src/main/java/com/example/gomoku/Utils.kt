@@ -20,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
@@ -126,8 +128,33 @@ fun recup_moi(auth: FirebaseAuth, db: FirebaseFirestore, onRes : (String) -> Uni
         }
 }
 
+fun loadFriendsAndRequests(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    onRes: (friends: List<String>, requests: List<String>) -> Unit
+){
+    val current_user = auth.currentUser!!
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener { res ->
+            val requests =
+                (res.get("requests") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+            val friends =
+                (res.get("friends") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+            onRes(friends, requests)
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error getting current user")
+            onRes(emptyList(), emptyList())
+        }
+}
+
 @Composable
-fun Recup_request(request : String){
+fun Recup_request(
+    request : String,
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    onRefresh: () -> Unit
+){
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,7 +177,13 @@ fun Recup_request(request : String){
             )
             Row{
                 IconButton(
-                    onClick = {},
+                    onClick = {
+                        accept_friend_request(auth, db, request){
+                            remove_friend_request(auth, db, request){
+                                onRefresh()
+                            }
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 4.dp)
                 ) {
                     Icon(
@@ -160,7 +193,11 @@ fun Recup_request(request : String){
                     )
                 }
                 IconButton(
-                    onClick = {},
+                    onClick = {
+                        remove_friend_request(auth, db, request){
+                            onRefresh()
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 4.dp)
                 ) {
                     Icon(
@@ -175,6 +212,157 @@ fun Recup_request(request : String){
 }
 
 @Composable
-fun Recup_friend(friend : String){
-    // TODO
+fun Recup_friend(
+    friend : String,
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    onRefresh: () -> Unit
+){
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Color.LightGray),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ){
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            Text(
+                text = friend,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f).padding(start = 8.dp, end = 16.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row{
+                Text("") // TODO : recuperer elo de l'ami ?
+                IconButton(
+                    onClick = {
+                        remove_friend(auth, db, friend, onRefresh)
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = "Refuser",
+                        tint = Color(0xFFF44336)
+                    )
+                }
+            }
+        }
+    }
+}
+
+fun accept_friend_request(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    request : String,
+    onComplete: () -> Unit
+){
+    val current_user = auth.currentUser!!
+
+    // Add friend to current user
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener { res ->
+            val current_p = res.get("pseudo").toString()
+            db.collection("users")
+                .document(current_user.uid)
+                .update("friends", FieldValue.arrayUnion(request))
+                .addOnSuccessListener {
+                    db.collection("users").whereEqualTo("pseudo", request).get()
+                        .addOnSuccessListener {
+                            val target = it.documents.first().id
+                            db.collection("users")
+                                .document(target)
+                                .update("friends", FieldValue.arrayUnion(current_p))
+                                .addOnSuccessListener {
+                                    onComplete()
+                                }
+                                .addOnFailureListener {
+                                    Log.i("TAG", "Profile: Error getting target1 user")
+                                }
+                        }
+                        .addOnFailureListener {
+                            Log.i("TAG", "Profile: Error getting target2 user")
+                        }
+                }
+                .addOnFailureListener {
+                    Log.i("TAG", "Profile: Error updating current user")
+                }
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error getting current user")
+        }
+}
+
+fun remove_friend_request(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    request : String,
+    refresh : () -> Unit
+){
+    val current_user = auth.currentUser!!
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener { res ->
+            db.collection("users")
+                .document(current_user.uid)
+                .update("requests", FieldValue.arrayRemove(request))
+                .addOnSuccessListener {
+                    Log.i("TAG", "Profile: Request removed")
+                    refresh()
+                }
+                .addOnFailureListener {
+                    Log.i("TAG", "Profile: Error removing request")
+                }
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error getting current user")
+        }
+}
+
+fun remove_friend(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    friend : String,
+    refresh : () -> Unit
+){
+    val current_user = auth.currentUser!!
+    var current_p = ""
+
+    db.collection("users").document(current_user.uid).get()
+        .addOnSuccessListener {
+            current_p = it.get("pseudo").toString()
+            db.collection("users")
+                .document(current_user.uid)
+                .update("friends", FieldValue.arrayRemove(friend))
+                .addOnSuccessListener {
+                    //remove friend to the other user
+                    db.collection("users").whereEqualTo("pseudo", friend).get()
+                        .addOnCompleteListener {
+                            val target = it.result.documents.first().id
+                            db.collection("users")
+                                .document(target)
+                                .update("friends", FieldValue.arrayRemove(current_p))
+                                .addOnSuccessListener {
+                                    refresh()
+                                }
+                                .addOnFailureListener {
+                                    Log.i("TAG", "Profile: Error getting target current user")
+                                }
+                        }
+                        .addOnFailureListener {
+                            Log.i("TAG", "Profile: Error getting target2 user")
+                        }
+                }
+                .addOnFailureListener {
+                    Log.i("TAG", "Profile: Error updating current user")
+                }
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error getting current user")
+        }
 }

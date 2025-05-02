@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,6 +24,7 @@ import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Recup_request
 import com.example.gomoku.Recup_friend
+import com.example.gomoku.loadFriendsAndRequests
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -33,19 +36,21 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
     // TODO : récupérer les amis d'un l'utilisateur depuis une base de données
 
     val current_user = auth.currentUser!!
-    var friends by remember { mutableStateOf(listOf<String>()) }
-    var requests by remember { mutableStateOf(listOf<String>()) }
+    var friends = remember { mutableStateListOf<String>() }
+    var requests = remember { mutableStateListOf<String>() }
 
-    db.collection("users").document(current_user.uid).get()
-            .addOnSuccessListener { res ->
-                requests = res.get("requests") as? List<String> ?: emptyList()
-                friends = res.get("friends") as? List<String> ?: emptyList()
-                Log.i("TAG", "Requests: ${res.data!!["requests"]}")
-                Log.i("TAG", "Friends: ${res.data!!["friends"]}")
-            }
-            .addOnFailureListener {
-                Log.i("TAG", "Friends: Error")
-            }
+    fun refresh() {
+        loadFriendsAndRequests(auth, db) { newFriends, newRequests ->
+            friends.clear()
+            friends.addAll(newFriends)
+            requests.clear()
+            requests.addAll(newRequests)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        refresh()
+    }
 
     Column(
         modifier = Modifier
@@ -68,7 +73,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
         ) {
             items(requests) { request ->
                 Log.i("TAG", "Requests: $request")
-                Recup_request(request)
+                Recup_request(request,auth,db, onRefresh = { refresh() })
             }
         }
 
@@ -84,9 +89,9 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 .padding(8.dp)
         ) {
             items(friends) { friend ->
-                Text(text = friend)
+                Log.i("TAG", "Friends: $friend")
+                Recup_friend(friend,auth,db, onRefresh = { refresh() })
             }
         }
     }
-
 }
