@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,11 +33,10 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
     // TODO : récupérer les amis d'un l'utilisateur depuis une base de données
 
     val current_user = auth.currentUser!!
-    var friends = listOf<String>()
-    var requests = listOf<String>()
+    var friends by remember { mutableStateOf(listOf<String>()) }
+    var requests by remember { mutableStateOf(listOf<String>()) }
 
-    LaunchedEffect(Unit) {
-        db.collection("users").document(current_user.uid).get()
+    db.collection("users").document(current_user.uid).get()
             .addOnSuccessListener { res ->
                 requests = res.data!!["requests"].toString().split(",")
                 friends = res.data!!["friends"].toString().split(",")
@@ -43,19 +47,11 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 Log.i("TAG", "Friends: Error")
             }
 
-    }
-
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
         Back(navController)
 
-//        if(friends.isEmpty()){
-//            Text(
-//                text = "Aucun ami :(",
-//                textAlign = TextAlign.Center
-//            )
-//        }
         Text(
             text = "Demandes d'amis",
             fontSize = 20.sp,
@@ -63,9 +59,10 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
             modifier = Modifier.padding(8.dp)
         )
         LazyColumn(
-            //modifier = Modifier.fillMaxSize().padding(8.dp)
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
         ) {
             items(requests) { request ->
+                Log.i("TAG", "Requests: $request")
                 Text(text = request)
             }
         }
@@ -77,7 +74,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
             modifier = Modifier.padding(8.dp)
         )
         LazyColumn(
-            //modifier = Modifier.fillMaxSize().padding(8.dp)
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
         ) {
             items(friends) { friend ->
                 Text(text = friend)

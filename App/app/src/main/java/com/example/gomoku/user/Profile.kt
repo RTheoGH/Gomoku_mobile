@@ -155,7 +155,6 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                         contentDescription = "Add",
                         modifier = Modifier.padding(4.dp).size(32.dp)
                     )
-                    Text(text = "Ajouter en ami")
                 }
             }
 
