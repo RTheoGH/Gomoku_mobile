@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.gomoku.nav.Navigation
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun App(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
+    rdb: FirebaseDatabase,
     navController: NavHostController = rememberNavController()
 ){
     Scaffold(
@@ -32,6 +34,6 @@ fun App(
             )
         },
     ) { innerPadding ->
-        Navigation(innerPadding, navController, Screens.Menu.name, auth, db)
+        Navigation(innerPadding, navController, Screens.Menu.name, auth, db, rdb)
     }
 }

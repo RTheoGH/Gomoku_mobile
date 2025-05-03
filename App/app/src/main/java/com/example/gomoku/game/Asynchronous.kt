@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,6 +15,7 @@ import com.example.gomoku.Back
 fun Asynchronus(pad : PaddingValues, navController: NavHostController){
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)){
         Back(navController)
+        Text("WORK IN PROGRESS")
     }
     // TODO : afficher les boutons pour créer une partie ou rejoindre une partie
 }

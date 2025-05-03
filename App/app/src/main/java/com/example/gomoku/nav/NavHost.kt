@@ -26,10 +26,11 @@ import com.example.gomoku.game.Online_game
 import com.example.gomoku.game.Online_join
 import com.example.gomoku.game.Online_lobby
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Navigation(pad : PaddingValues, navController: NavHostController, startDestination: String, auth: FirebaseAuth, db: FirebaseFirestore){
+fun Navigation(pad : PaddingValues, navController: NavHostController, startDestination: String, auth: FirebaseAuth, db: FirebaseFirestore, rdb: FirebaseDatabase){
     NavHost(navController = navController, startDestination = startDestination){
         composable(route = Screens.Menu.name) {
             Menu(pad, navController, auth, db)
@@ -79,16 +80,16 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
             Online(pad, navController)
         }
         composable(route = Screens.Online_create.name) {
-            Online_create(pad, navController)
+            Online_create(pad, navController,auth,db,rdb)
         }
         composable(route = Screens.Online_join.name) {
-            Online_join(pad, navController)
+            Online_join(pad, navController,auth,db,rdb)
         }
         composable(route = Screens.Online_lobby.name) {
-            Online_lobby(pad, navController)
+            Online_lobby(pad, navController,auth,db,rdb)
         }
         composable(route = Screens.Online_game.name) {
-            Online_game(pad, navController)
+            Online_game(pad, navController,auth,db,rdb)
         }
 
         composable(route = Screens.Asynchronus.name) {
