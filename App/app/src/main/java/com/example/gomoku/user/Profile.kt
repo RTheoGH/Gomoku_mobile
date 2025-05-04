@@ -31,12 +31,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_card
+import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.example.gomoku.recup_moi
 import com.google.firebase.auth.EmailAuthProvider
@@ -47,6 +50,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?){
     //TODO : Meilleur visuel ?
+    val context = LocalContext.current
 
     var erreur by remember { mutableStateOf("") }
 
@@ -106,7 +110,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Pseudonyme")
+            Text(text = stringResource(R.string.pseudo))
             Custom_card(pseudo)
             Text(text = "Elo")
             Custom_card(elo.toString())
@@ -115,8 +119,6 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 IconButton(
                     onClick = {
                         val current_user = auth.currentUser!!
-
-                        //friend_request()
 
                         db.collection("users").document(current_user.uid).get()
                             .addOnSuccessListener { res ->
@@ -142,7 +144,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                                 }
                                         } else {
                                             Log.i("TAG", "Profile: User not found")
-                                            erreur = "Utilisateur introuvable"
+                                            erreur = context.getString(R.string.user_not_found)
                                         }
 
                                     }
@@ -231,20 +233,20 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             OutlinedTextField(
                 value = pseudo,
                 onValueChange = { if(it.length <= 16) pseudo = it },
-                label = { Text(text = "Pseudonyme") },
+                label = { Text(text = stringResource(R.string.pseudo)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Mot de passe") },
+                label = { Text(text = stringResource(R.string.mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp),
                 isError = short_password_error,
                 supportingText = {
                     if (short_password_error) {
-                        Text("Le mot de passe doit contenir au moins 6 caractères")
+                        Text(stringResource(R.string.minimum_mdp_length), color = Color.Red)
                     }
                 }
             )
@@ -252,7 +254,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             OutlinedTextField(
                 value = new_password,
                 onValueChange = { new_password = it },
-                label = { Text(text = "Nouveau mot de passe") },
+                label = { Text(text = stringResource(R.string.new_mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp),
             )
@@ -260,7 +262,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             OutlinedTextField(
                 value = new_confirm_password,
                 onValueChange = { new_confirm_password = it },
-                label = { Text(text = "Confirmation du mot de passe") },
+                label = { Text(text = stringResource(R.string.confirm_mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp)
             )
@@ -268,7 +270,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
-                    color = androidx.compose.ui.graphics.Color.Red,
+                    color = Color.Red,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -283,11 +285,11 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
 
                         val modifs = {
                             if(pseudo_edit && password_edit){
-                                Toast.makeText(context, "Pseudo et mot de passe modifiés", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.edit_pm), Toast.LENGTH_SHORT).show()
                             }else if(pseudo_edit){
-                                Toast.makeText(context, "Pseudo modifié", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.edit_p), Toast.LENGTH_SHORT).show()
                             }else if(password_edit){
-                                Toast.makeText(context, "Mot de passe modifié", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.edit_m), Toast.LENGTH_SHORT).show()
                             }
                             navController.navigate(Screens.Profile.name)
                         }
@@ -295,7 +297,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                         db.collection("users").whereEqualTo("pseudo", pseudo).get().addOnSuccessListener { res ->
                             val is_pseudo_taken = res.documents.any { it.id != current_user.uid }
                             if (is_pseudo_taken) {
-                                errorMessage = "Pseudonyme déjà utilisé"
+                                errorMessage = context.getString(R.string.username_taken)
                             }else{
                                 if(pseudo != current_pseudo){
                                     db.collection("users").document(current_user.uid).update(
@@ -322,11 +324,11 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                                             if(pseudo_edit_done) modifs()
                                         }.addOnFailureListener {
                                             Log.i("TAG", "Profile: Error updating password")
-                                            errorMessage = "Erreur lors de la modification du mot de passe"
+                                            errorMessage = context.getString(R.string.error_update_mdp)
                                         }
                                     }
                                         .addOnFailureListener {
-                                            errorMessage = "Mot de passe incorrect"
+                                            errorMessage = context.getString(R.string.incorrect_mdp)
                                         }
                                 }else{
                                     password_edit_done = true
@@ -335,11 +337,11 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                             }
                         }
                     }else{
-                        errorMessage = "Les mots de passe ne correspondent pas"
+                        errorMessage = context.getString(R.string.mdp_match)
                     }
                 },
             ) {
-                Text(text = "Modifier les informations")
+                Text(text = stringResource(R.string.edit_infos))
             }
         }
     }

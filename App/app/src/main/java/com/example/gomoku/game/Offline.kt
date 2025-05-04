@@ -29,17 +29,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_row
+import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 
 @Composable
 fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
     var player1 by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
-
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -58,25 +60,24 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             OutlinedTextField(
                 value = player1,
                 onValueChange = { if(it.length <= 10) player1 = it },
-                label = { Text(text = "Joueur 1") },
+                label = { Text(text = stringResource(R.string.player1)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
                 value = player2,
                 onValueChange = { if(it.length <= 10) player2 = it },
-                label = { Text(text = "Joueur 2") },
+                label = { Text(text = stringResource(R.string.player2)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             Button(
                 onClick = {
-                    //TODO
                     val route = "${Screens.Offline_game.name}/$player1/$player2"
                     navController.navigate(route)
                 },
             ){
-                Text(text = "Jouer")
+                Text(text = stringResource(R.string.play))
             }
         }
     }
@@ -85,6 +86,8 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun Offline_game(pad : PaddingValues, navController: NavHostController, player1: String, player2: String){
+    val context = LocalContext.current
+
     Log.i("TAG", "Offline_game: $player1, $player2")
     var showDialog by remember { mutableStateOf(false) }
 
@@ -98,7 +101,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
             }
         }
     }
-    var turn_history = remember { mutableStateListOf("Début de la partie") }
+    var turn_history = remember { mutableStateListOf(context.getString(R.string.game_start_message)) }
     val listState = rememberLazyListState()
     LaunchedEffect(turn_history.size) {
         listState.animateScrollToItem(turn_history.size - 1)
@@ -128,7 +131,10 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                             this[y] = board[x][y].copy(state = newState)
                         }
                         val player = if(playerTurn == 0) player1 else player2
-                        turn_history.add("$player a joué en $x, $y.")
+                        val pos_x = x+1
+                        val pos_y = y+1
+
+                        turn_history.add(player+" "+context.getString(R.string.played_in)+" "+pos_x+","+pos_y+".")
                         println(turn_history)
 
                         if (check_win(board, x, y, size)) {
@@ -155,7 +161,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                 if (isFinished){
                     item {
                         val player = if(playerTurn == 1) player1 else player2
-                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = "$player a gagné la partie !")
+                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+stringResource(R.string.win_offline))
                     }
                 }
             }
@@ -164,8 +170,8 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                 val winner = if(playerTurn == 1) player1 else player2
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
-                    title = { Text(text = "Partie terminée") },
-                    text = { Text(text = "$winner a gagné la partie !") },
+                    title = { Text(text = stringResource(R.string.game_over)) },
+                    text = { Text(text = winner+" "+stringResource(R.string.win_offline)) },
                     confirmButton = {
                         Button(onClick = {
                             showDialog = false
@@ -176,7 +182,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                                 }
                             }
                         }) {
-                            Text(text = "Rejouer")
+                            Text(text = stringResource(R.string.replay))
                         }
                     },
                     dismissButton = {
@@ -188,7 +194,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                                 }
                             }
                         }) {
-                            Text(text = "Quitter")
+                            Text(text = stringResource(R.string.leave))
                         }
                     }
                 )

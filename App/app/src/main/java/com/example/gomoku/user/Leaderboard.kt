@@ -26,10 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
+import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -61,7 +63,7 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
         Back(navController)
 
         Text(
-            text = "Leaderboard",
+            text = stringResource(R.string.leaderboard),
             fontSize = 30.sp,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(8.dp)

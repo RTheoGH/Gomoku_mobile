@@ -26,10 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
+import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -37,6 +40,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+    val context = LocalContext.current
+
     var pseudo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -64,14 +69,14 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: Firebas
             OutlinedTextField(
                 value = pseudo,
                 onValueChange = { pseudo = it },
-                label = { Text(text = "Pseudonyme") },
+                label = { Text(text = stringResource(R.string.pseudo)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Mot de passe") },
+                label = { Text(text = stringResource(R.string.mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp)
             )
@@ -91,7 +96,7 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     //TODO
                     errorMessage = null
                     if(pseudo.isEmpty() || password.isEmpty()){
-                        errorMessage = "Veuillez remplir tous les champs"
+                        errorMessage = R.string.error_fields.toString()
                         return@Button
                     }
 
@@ -106,18 +111,18 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                         navController.navigate(Screens.Menu.name)
                                     }
                                     .addOnFailureListener {
-                                        errorMessage = "Pseudo ou mot de passe incorrect"
+                                        errorMessage = context.getString(R.string.error_pseudo_mdp)
                                     }
                             } else {
-                                errorMessage = "Pseudonyme introuvable"
+                                errorMessage = context.getString(R.string.error_pseudo)
                             }
                         }
                         .addOnFailureListener {
-                            errorMessage = "Erreur de connexion"
+                            errorMessage = context.getString(R.string.error_connexion)
                         }
                 },
             ) {
-                Text(text = "Se connecter")
+                Text(text = stringResource(R.string.sign_in))
             }
         }
     }
@@ -125,6 +130,8 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
 @Composable
 fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+    val context = LocalContext.current
+
     var pseudo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirm_password by remember { mutableStateOf("") }
@@ -165,12 +172,12 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
             OutlinedTextField(
                 value = pseudo,
                 onValueChange = { if(it.length <= 16) pseudo = it },
-                label = { Text(text = "Pseudonyme") },
+                label = { Text(text = stringResource(R.string.pseudo)) },
                 modifier = Modifier.padding(4.dp),
                 isError = pseudoError,
                 supportingText = {
                     if (pseudoError) {
-                        Text("Pseudonyme invalide", color = Color.Red)
+                        Text(stringResource(R.string.invalid_pseudo), color = Color.Red)
                     }
                 }
             )
@@ -181,12 +188,12 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     email = it
                     emailError = !Patterns.EMAIL_ADDRESS.matcher(email).matches()
                 },
-                label = { Text(text = "Email") },
+                label = { Text(text = stringResource(R.string.mail)) },
                 modifier = Modifier.padding(4.dp),
                 isError = emailError,
                 supportingText = {
                     if (emailError) {
-                        Text("Adresse email invalide", color = Color.Red)
+                        Text(stringResource(R.string.invalid_email), color = Color.Red)
                     }
                 }
             )
@@ -194,13 +201,13 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Mot de passe") },
+                label = { Text(text = stringResource(R.string.mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp),
                 isError = short_password_error,
                 supportingText = {
                     if (short_password_error) {
-                        Text("Le mot de passe doit contenir au moins 6 caractères")
+                        Text(stringResource(R.string.minimum_mdp_length), color = Color.Red)
                     }
                 }
             )
@@ -208,7 +215,7 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
             OutlinedTextField(
                 value = confirm_password,
                 onValueChange = { confirm_password = it },
-                label = { Text(text = "Confirmation du mot de passe") },
+                label = { Text(text = stringResource(R.string.confirm_mdp)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(4.dp)
             )
@@ -228,7 +235,7 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     if(password == confirm_password) {
                         db.collection("users").whereEqualTo("pseudo", pseudo).get().addOnSuccessListener { res ->
                             if (!res.isEmpty) {
-                                errorMessage = "Pseudonyme déjà utilisé"
+                                errorMessage = context.getString(R.string.username_taken)
                             } else {
                                 auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { authTask ->
                                     if (authTask.isSuccessful) {
@@ -250,26 +257,26 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                                     navController.navigate("${Screens.Profile.name}/${user.pseudo}")
                                                 } else {
                                                     Log.i("TAG", "Error adding document", dbTask.exception)
-                                                    errorMessage = "Erreur lors de la création du profil"
+                                                    errorMessage = context.getString(R.string.error_create_profile)
                                                 }
                                             }
                                     }
                                 }
                                 .addOnFailureListener { e ->
                                     if (e is FirebaseAuthUserCollisionException) {
-                                        errorMessage = "Email déjà utilisé"
+                                        errorMessage = context.getString(R.string.email_taken)
                                     } else {
-                                        errorMessage = "Erreur lors de la création du compte"
+                                        errorMessage = context.getString(R.string.error_create_account)
                                     }
                                 }
                             }
                         }
                     } else {
-                        errorMessage = "Les mots de passe ne correspondent pas"
+                        errorMessage = context.getString(R.string.mdp_match)
                     }
                 },
             ) {
-                Text(text = "S'inscrire")
+                Text(text = stringResource(R.string.sign_up))
             }
         }
     }
