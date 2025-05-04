@@ -25,6 +25,34 @@ data class GomokuCell(
     var state: CellState = CellState.EMPTY
 )
 
+fun mapToGomokuCell(map: Map<String, Any?>): GomokuCell {
+    val x = (map["x"] as? Long)?.toInt() ?: 0
+    val y = (map["y"] as? Long)?.toInt() ?: 0
+    val stateStr = map["state"] as? String ?: "EMPTY"
+    val state = CellState.valueOf(stateStr)
+    return GomokuCell(x, y, state)
+}
+
+fun gomokuCellToMap(cell: GomokuCell): Map<String, Any> {
+    return mapOf(
+        "x" to cell.x,
+        "y" to cell.y,
+        "state" to cell.state.name
+    )
+}
+
+fun boardToFirebaseFormat(board: List<List<GomokuCell>>): List<List<Map<String, Any>>> {
+    return board.map { row ->
+        row.map { cell ->
+            mapOf(
+                "x" to cell.x,
+                "y" to cell.y,
+                "state" to cell.state.name
+            )
+        }
+    }
+}
+
 @Composable
 fun Board(
     board: List<List<GomokuCell>>,

@@ -2,6 +2,7 @@ package com.example.gomoku.game
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -25,15 +29,22 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_card
+import com.example.gomoku.Custom_row
+import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -139,13 +150,20 @@ fun Online_create(
                                 val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
                                 Log.i("TAG", "Online_create: $lobbyRef")
 
+                                val board = List(15) { i ->
+                                    List(15) { j ->
+                                        gomokuCellToMap(GomokuCell(i, j, CellState.EMPTY))
+                                    }
+                                }
+
                                 val lobbyData = mapOf(
                                     "host" to uid_name,
                                     "password" to password.trim(),
                                     "player1" to uid_name,
                                     "player2" to "",
                                     "status" to "waiting",
-                                    "created_at" to System.currentTimeMillis()
+                                    "created_at" to System.currentTimeMillis(),
+                                    "board" to board
                                     //TODO : ajouter l'état du plateau de jeu (Liste de GomokuCell) (vide par défaut)
                                 )
                                 Log.i("TAG", "Online_create: $lobbyData")
@@ -344,14 +362,19 @@ fun Online_lobby(
             Text("Mode : Online")
             Spacer(modifier = Modifier.height(16.dp))
 
-            Custom_card("Salle : $lobbyId")
-            Custom_card("mdp : $password | Status : $status")
+            Text("Salle :")
+            Custom_card(lobbyId)
+
+            Text("MDP | Status")
+            Custom_card("$password | $status")
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Custom_card("Joueur 1 : $player1")
+            Text("Joueur 1 :")
+            Custom_card(player1)
 
-            Custom_card("Joueur 2 : $player2")
+            Text("Joueur 2 :")
+            Custom_card(player2)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -363,8 +386,8 @@ fun Online_lobby(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ){
                 Button(
                     onClick = {
@@ -399,6 +422,7 @@ fun Online_lobby(
     }
 }
 
+@SuppressLint("MutableCollectionMutableState")
 @Composable
 fun Online_game(
     pad : PaddingValues,
@@ -409,11 +433,66 @@ fun Online_game(
     lobbyId: String
 ) {
     //TODO : afficher le jeu
-    var showDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    var showDialogWin by remember { mutableStateOf(false) }
+    var showDialogLeave by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var player1 by remember { mutableStateOf("") }
+    var player2 by remember { mutableStateOf("") }
+    var board by remember {
+        mutableStateOf(
+            MutableList(15) { i ->
+                MutableList(15) { j ->
+                    GomokuCell(i, j, CellState.EMPTY)
+                }
+            }
+        )
+    }
+
+    //TODO : envoyer le playerTurn sur realtime database ainsi que le turn_history
+
+    var playerTurn by remember { mutableIntStateOf(0) }
+    var isFinished by remember { mutableStateOf(false) }
+    var turn_history = remember { mutableStateListOf(context.getString(R.string.game_start_message)) }
+    val listState = rememberLazyListState()
+    LaunchedEffect(turn_history.size) {
+        listState.animateScrollToItem(turn_history.size - 1)
+    }
+
+    val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
+    val valueEventListener = object: ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            player1 = snapshot.child("player1").getValue(String::class.java) ?: ""
+            player2 = snapshot.child("player2").getValue(String::class.java) ?: ""
+            val boardSnapshot = snapshot.child("board")
+            val newBoard = MutableList(15) { MutableList(15) { GomokuCell(0, 0, CellState.EMPTY) } }
+
+            for (i in 0 until boardSnapshot.childrenCount.toInt()) {
+                val rowSnapshot = boardSnapshot.child(i.toString())
+                for (j in 0 until rowSnapshot.childrenCount.toInt()) {
+                    val cellMap = rowSnapshot.child(j.toString()).value as? Map<String, Any> ?: continue
+                    newBoard[i][j] = mapToGomokuCell(cellMap)
+                }
+            }
+            board = newBoard
+        }
+        override fun onCancelled(error: DatabaseError) {
+            errorMessage = error.message
+        }
+    }
+
+    DisposableEffect(Unit){
+        lobbyRef.addValueEventListener(valueEventListener)
+        onDispose {
+            lobbyRef.removeEventListener(valueEventListener)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         IconButton(
-            onClick = { showDialog = true },
+            onClick = { showDialogLeave = true },
             modifier = Modifier.padding(4.dp).size(32.dp)
         ) {
             Icon(
@@ -422,16 +501,108 @@ fun Online_game(
                 modifier = Modifier.padding(4.dp).size(32.dp)
             )
         }
-        Text("hey you are finally here !")
 
-        if(showDialog){
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
+            Custom_row(1,"",player2)
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            Board(
+                board = board,
+                playerTurn = playerTurn,
+                onCellClick = { x, y ->
+                    if (board[x][y].state == CellState.EMPTY && !isFinished) {
+                        val newState = if (playerTurn == 0) CellState.WHITE else CellState.BLACK
+                        board[x] = board[x].toMutableList().apply {
+                            this[y] = board[x][y].copy(state = newState)
+                        }
+                        val player = if(playerTurn == 0) player1 else player2
+                        val pos_x = x+1
+                        val pos_y = y+1
+
+                        turn_history.add(player+" "+context.getString(R.string.played_in)+" "+pos_x+","+pos_y+".")
+                        println(turn_history)
+
+                        if (check_win(board, x, y, 15)) {
+                            isFinished = true
+                            showDialogWin = true
+                            println("gagné !!!!!!")
+                            //TODO : enregistrer la partie dans l'historique
+                        }
+
+                        playerTurn = 1 - playerTurn
+                        println("Tour du joueur : $playerTurn")
+
+                        val updatedBoard = boardToFirebaseFormat(board)
+                        lobbyRef.child("board").setValue(updatedBoard)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+            Custom_row(2,"",player1)
+
+            Spacer(modifier = Modifier.padding(vertical = 16.dp))
+
+            LazyColumn(state = listState, modifier = Modifier.background(Color.LightGray).fillMaxWidth().padding(vertical = 10.dp)) {
+                items(turn_history){ turn ->
+                    Text(modifier = Modifier.padding(horizontal = 5.dp), text = turn)
+                }
+                if (isFinished){
+                    item {
+                        val player = if(playerTurn == 1) player1 else player2
+                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+ stringResource(R.string.win_offline))
+                    }
+                }
+            }
+
+            if(showDialogWin){
+                val winner = if(playerTurn == 1) player1 else player2
+                AlertDialog(
+                    onDismissRequest = { showDialogWin = false },
+                    title = { Text(text = stringResource(R.string.game_over)) },
+                    text = { Text(text = winner+" "+stringResource(R.string.win_offline)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            showDialogWin = false
+                            val route = "${Screens.Offline_game.name}/$player1/$player2"
+                            navController.navigate(route){
+                                popUpTo(route){
+                                    inclusive = true
+                                }
+                            }
+                        }) {
+                            Text(text = stringResource(R.string.replay))
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialogWin = false
+                            navController.navigate(Screens.Menu.name){
+                                popUpTo(Screens.Menu.name){
+                                    inclusive = true
+                                }
+                            }
+                        }) {
+                            Text(text = stringResource(R.string.leave))
+                        }
+                    }
+                )
+            }
+
+        }
+
+        if(showDialogLeave){
             AlertDialog(
-                onDismissRequest = { showDialog = false },
+                onDismissRequest = { showDialogLeave = false },
                 title = { Text(text = "Quitter ?") },
                 text = { Text(text = "Voulez-vous vraiment quitter la partie ?") },
                 confirmButton = {
                     Button(onClick = {
-                        showDialog = false
+                        showDialogLeave = false
                         //TODO : faire gagner l'autre joueur
                         val route = navController.navigate(Screens.Menu.name)
                         navController.navigate(route){
@@ -445,7 +616,7 @@ fun Online_game(
                 },
                 dismissButton = {
                     Button(onClick = {
-                        showDialog = false
+                        showDialogLeave = false
                     }) {
                         Text(text = "Rester")
                     }
