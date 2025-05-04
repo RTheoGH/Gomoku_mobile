@@ -85,11 +85,23 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         composable(route = Screens.Online_join.name) {
             Online_join(pad, navController,auth,db,rdb)
         }
-        composable(route = Screens.Online_lobby.name) {
-            Online_lobby(pad, navController,auth,db,rdb)
+        composable(
+            route = "${Screens.Online_lobby.name}/{lobbyId}",
+            arguments = listOf(
+                navArgument("lobbyId") { nullable = false }
+            )
+        ) { backStackEntry ->
+            val lobbyId = backStackEntry.arguments?.getString("lobbyId") ?: ""
+            Online_lobby(pad, navController,auth,db,rdb,lobbyId=lobbyId)
         }
-        composable(route = Screens.Online_game.name) {
-            Online_game(pad, navController,auth,db,rdb)
+        composable(
+            route = "${Screens.Online_game.name}/{lobbyId}",
+            arguments = listOf(
+                navArgument("lobbyId") { nullable = false }
+            )
+        ) { backStackEntry ->
+            val lobbyId = backStackEntry.arguments?.getString("lobbyId") ?: ""
+            Online_game(pad, navController,auth,db,rdb,lobbyId=lobbyId)
         }
 
         composable(route = Screens.Asynchronus.name) {

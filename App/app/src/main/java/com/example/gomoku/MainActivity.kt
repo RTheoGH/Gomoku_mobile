@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
 
         auth = Firebase.auth
         db = Firebase.firestore
-        rdb = Firebase.database
+        rdb = FirebaseDatabase.getInstance("https://gomoku-76114-default-rtdb.europe-west1.firebasedatabase.app")
 
         enableEdgeToEdge()
         setContent {
