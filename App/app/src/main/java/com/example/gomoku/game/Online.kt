@@ -16,14 +16,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -34,12 +38,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_card
@@ -47,6 +53,7 @@ import com.example.gomoku.Custom_row
 import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -104,7 +111,7 @@ fun Online_create(
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         Back(navController)
 
-        Spacer(modifier = Modifier.height(164.dp))
+        Spacer(modifier = Modifier.height(128.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -156,15 +163,24 @@ fun Online_create(
                                     }
                                 }
 
+                                val player1Data = mapOf(
+                                    "uid" to uid,
+                                    "pseudo" to uid_name
+                                )
+
                                 val lobbyData = mapOf(
                                     "host" to uid_name,
                                     "password" to password.trim(),
-                                    "player1" to uid_name,
+                                    /*TODO : son uid et son nom*/
+                                    "player1" to player1Data,
                                     "player2" to "",
+                                    "winner" to "",
                                     "status" to "waiting",
                                     "created_at" to System.currentTimeMillis(),
-                                    "board" to board
-                                    //TODO : ajouter l'état du plateau de jeu (Liste de GomokuCell) (vide par défaut)
+                                    "board" to board,
+                                    "turn" to 0,
+                                    "turn_history" to emptyList<String>(),
+                                    "chat" to emptyList<String>()
                                 )
                                 Log.i("TAG", "Online_create: $lobbyData")
 
@@ -204,6 +220,8 @@ fun Online_join(
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         Back(navController)
+
+        Spacer(modifier = Modifier.height(128.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -258,15 +276,20 @@ fun Online_join(
                                 }
 
                                 val lobbyPassword = snapshot.child("password").getValue(String::class.java)
-                                val currentPlayer1 = snapshot.child("player1").getValue(String::class.java)
-                                val currentPlayer2 = snapshot.child("player2").getValue(String::class.java)
+                                val currentPlayer1 = snapshot.child("player1").child("pseudo").getValue(String::class.java)
+                                val currentPlayer2 = snapshot.child("player2").child("pseudo").getValue(String::class.java)
 
                                 when{
                                     lobbyPassword != enteredPassword -> errorMessage = "Mot de passe incorrect"
                                     currentPlayer1 == uid_name || currentPlayer2 == uid_name -> errorMessage = "Vous êtes déjà dans cette partie"
                                     !currentPlayer2.isNullOrEmpty() -> errorMessage = "Partie pleine"
                                     else -> {
-                                        lobbyRef.child("player2").setValue(uid_name)
+                                        val player2Data = mapOf(
+                                            "uid" to uid,
+                                            "pseudo" to uid_name
+                                        )
+
+                                        lobbyRef.child("player2").setValue(player2Data)
                                             .addOnSuccessListener {
                                                 navController.navigate(Screens.Online_lobby.name + "/$lobbyId")
                                             }
@@ -313,8 +336,8 @@ fun Online_lobby(
     val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
     val valueEventListener = object: ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            player1 = snapshot.child("player1").getValue(String::class.java) ?: ""
-            player2 = snapshot.child("player2").getValue(String::class.java) ?: ""
+            player1 = snapshot.child("player1").child("pseudo").getValue(String::class.java) ?: ""
+            player2 = snapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
             password = snapshot.child("password").getValue(String::class.java) ?: ""
             status = snapshot.child("status").getValue(String::class.java) ?: "waiting"
 
@@ -323,12 +346,6 @@ fun Online_lobby(
             }else if (player2.isNotEmpty()){
                 lobbyRef.child("status").setValue("ready")
             }
-
-//            isHost = player1 == currentUidName
-//            if(player2.isNotEmpty()){
-//                lobbyRef.child("status").setValue("ready")
-//            }
-//            canStart = player2.isNotEmpty() && isHost && status == "ready"
         }
         override fun onCancelled(error: DatabaseError) {
             errorMessage = error.message
@@ -352,7 +369,7 @@ fun Online_lobby(
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
 
-        Spacer(modifier = Modifier.height(164.dp))
+        Spacer(modifier = Modifier.height(128.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -374,7 +391,9 @@ fun Online_lobby(
             Custom_card(player1)
 
             Text("Joueur 2 :")
-            Custom_card(player2)
+            if(player2.isNotEmpty()){
+                Custom_card(player2)
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -398,7 +417,7 @@ fun Online_lobby(
                                     navController.popBackStack(Screens.Menu.name,inclusive = false)
                                 }
                         }else if(currentUidName == player2){
-                            lobbyRef.child("player2").setValue("")
+                            lobbyRef.child("player2").removeValue()
                                 .addOnCompleteListener {
                                     Log.i("TAG", "Online_lobby: joueur 2 supprimé")
                                     navController.popBackStack(Screens.Menu.name,inclusive = false)
@@ -432,15 +451,20 @@ fun Online_game(
     rdb: FirebaseDatabase,
     lobbyId: String
 ) {
-    //TODO : afficher le jeu
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     var showDialogWin by remember { mutableStateOf(false) }
     var showDialogLeave by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var player1 by remember { mutableStateOf("") }
+    var player1uid by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
+    var player2uid by remember { mutableStateOf("") }
+
+    var winner by remember { mutableStateOf("") }
+
     var board by remember {
         mutableStateOf(
             MutableList(15) { i ->
@@ -458,14 +482,19 @@ fun Online_game(
     var turn_history = remember { mutableStateListOf(context.getString(R.string.game_start_message)) }
     val listState = rememberLazyListState()
     LaunchedEffect(turn_history.size) {
-        listState.animateScrollToItem(turn_history.size - 1)
+        listState.animateScrollToItem(turn_history.size)
     }
+
+    var chat = remember { mutableStateListOf<String>() }
+    val message = remember { mutableStateOf("") }
 
     val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
     val valueEventListener = object: ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            player1 = snapshot.child("player1").getValue(String::class.java) ?: ""
-            player2 = snapshot.child("player2").getValue(String::class.java) ?: ""
+            player1 = snapshot.child("player1").child("pseudo").getValue(String::class.java) ?: ""
+            player1uid = snapshot.child("player1").child("uid").getValue(String::class.java) ?: ""
+            player2 = snapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
+            player2uid = snapshot.child("player2").child("uid").getValue(String::class.java) ?: ""
             val boardSnapshot = snapshot.child("board")
             val newBoard = MutableList(15) { MutableList(15) { GomokuCell(0, 0, CellState.EMPTY) } }
 
@@ -477,7 +506,39 @@ fun Online_game(
                 }
             }
             board = newBoard
+            playerTurn = snapshot.child("turn").getValue(Int::class.java) ?: 0
+            val turnHistorySnapshot = snapshot.child("turn_history")
+            turn_history.clear()
+            for (i in 0 until turnHistorySnapshot.childrenCount.toInt()) {
+                turn_history.add(turnHistorySnapshot.child(i.toString()).value.toString())
+            }
+            isFinished = snapshot.child("status").getValue(String::class.java) == "finished"
+
+            winner = snapshot.child("winner").getValue(String::class.java) ?: ""
+            if(winner != "" && isFinished){
+                showDialogWin = true
+            }
         }
+        override fun onCancelled(error: DatabaseError) {
+            errorMessage = error.message
+        }
+    }
+
+    val chatEventListener = object: ChildEventListener {
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            val m = snapshot.value.toString()
+            chat.add(m)
+        }
+
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+
+        override fun onChildRemoved(snapshot: DataSnapshot) {
+            val m = snapshot.value.toString()
+            chat.remove(m)
+        }
+
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
         override fun onCancelled(error: DatabaseError) {
             errorMessage = error.message
         }
@@ -485,12 +546,20 @@ fun Online_game(
 
     DisposableEffect(Unit){
         lobbyRef.addValueEventListener(valueEventListener)
+        lobbyRef.child("chat").addChildEventListener(chatEventListener)
         onDispose {
             lobbyRef.removeEventListener(valueEventListener)
+            lobbyRef.child("chat").removeEventListener(chatEventListener)
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(pad)
+            .padding(8.dp)
+            .verticalScroll(scrollState)
+    ) {
         IconButton(
             onClick = { showDialogLeave = true },
             modifier = Modifier.padding(4.dp).size(32.dp)
@@ -514,6 +583,11 @@ fun Online_game(
                 board = board,
                 playerTurn = playerTurn,
                 onCellClick = { x, y ->
+                    val currentUid = auth.currentUser!!.uid
+                    val expectedUid = if (playerTurn == 0) player1uid else player2uid
+
+                    if (currentUid != expectedUid) return@Board
+
                     if (board[x][y].state == CellState.EMPTY && !isFinished) {
                         val newState = if (playerTurn == 0) CellState.WHITE else CellState.BLACK
                         board[x] = board[x].toMutableList().apply {
@@ -525,19 +599,23 @@ fun Online_game(
 
                         turn_history.add(player+" "+context.getString(R.string.played_in)+" "+pos_x+","+pos_y+".")
                         println(turn_history)
+                        lobbyRef.child("turn_history").setValue(turn_history)
+
 
                         if (check_win(board, x, y, 15)) {
                             isFinished = true
                             showDialogWin = true
+                            winner = if(playerTurn == 0) player1 else player2
+                            lobbyRef.child("status").setValue("finished")
+                            lobbyRef.child("winner").setValue(winner)
+
                             println("gagné !!!!!!")
                             //TODO : enregistrer la partie dans l'historique
                         }
 
                         playerTurn = 1 - playerTurn
-                        println("Tour du joueur : $playerTurn")
-
-                        val updatedBoard = boardToFirebaseFormat(board)
-                        lobbyRef.child("board").setValue(updatedBoard)
+                        lobbyRef.child("turn").setValue(playerTurn)
+                        lobbyRef.child("board").setValue(boardToFirebaseFormat(board))
                     }
                 }
             )
@@ -545,9 +623,16 @@ fun Online_game(
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
             Custom_row(2,"",player1)
 
-            Spacer(modifier = Modifier.padding(vertical = 16.dp))
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
-            LazyColumn(state = listState, modifier = Modifier.background(Color.LightGray).fillMaxWidth().padding(vertical = 10.dp)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .background(Color.LightGray)
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .height(80.dp)
+            ) {
                 items(turn_history){ turn ->
                     Text(modifier = Modifier.padding(horizontal = 5.dp), text = turn)
                 }
@@ -559,22 +644,66 @@ fun Online_game(
                 }
             }
 
+            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+
+            LazyColumn(
+                modifier = Modifier
+                    .background(Color.LightGray)
+                    .fillMaxWidth()
+                    .height(100.dp)
+            ) {
+                items(chat){ message ->
+                    Text(modifier = Modifier.padding(horizontal = 5.dp), text = message)
+                }
+            }
+
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                TextField(
+                    value = message.value,
+                    onValueChange = { message.value = it },
+                    modifier = Modifier.weight(1f).fillMaxWidth(fraction = 0.8f)
+                )
+                IconButton(
+                    onClick = {
+                        val sender = if(auth.currentUser!!.uid == player1uid) player1 else player2
+                        val newMessage = "$sender : ${message.value}"
+
+                        lobbyRef.child("chat").push().setValue(newMessage)
+                        message.value = ""
+                    }
+                ){
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Send"
+                    )
+                }
+            }
+
             if(showDialogWin){
-                val winner = if(playerTurn == 1) player1 else player2
                 AlertDialog(
+                    properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
                     onDismissRequest = { showDialogWin = false },
                     title = { Text(text = stringResource(R.string.game_over)) },
                     text = { Text(text = winner+" "+stringResource(R.string.win_offline)) },
                     confirmButton = {
-                        Button(onClick = {
-                            showDialogWin = false
-                            val route = "${Screens.Offline_game.name}/$player1/$player2"
-                            navController.navigate(route){
-                                popUpTo(route){
-                                    inclusive = true
+                        Button(
+                            onClick = {
+                                showDialogWin = false
+                                val route = "${Screens.Offline_game.name}/$player1/$player2"
+                                navController.navigate(route){
+                                    popUpTo(route){
+                                        inclusive = true
+                                    }
                                 }
-                            }
-                        }) {
+                            },
+                            enabled = false
+                        ) {
                             Text(text = stringResource(R.string.replay))
                         }
                     },
@@ -592,11 +721,11 @@ fun Online_game(
                     }
                 )
             }
-
         }
 
         if(showDialogLeave){
             AlertDialog(
+                properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
                 onDismissRequest = { showDialogLeave = false },
                 title = { Text(text = "Quitter ?") },
                 text = { Text(text = "Voulez-vous vraiment quitter la partie ?") },
@@ -604,9 +733,25 @@ fun Online_game(
                     Button(onClick = {
                         showDialogLeave = false
                         //TODO : faire gagner l'autre joueur
-                        val route = navController.navigate(Screens.Menu.name)
-                        navController.navigate(route){
-                            popUpTo(route){
+                        val currentUid = auth.currentUser!!.uid
+
+                        val winnerPseudo = if(currentUid == player1uid) player2 else player1
+                        val leaverPseudo = if(currentUid == player1uid) player1 else player2
+                        val leaverMessage = "$leaverPseudo a quitté la partie"
+
+                        lobbyRef.child("status").setValue("finished")
+                        lobbyRef.child("winner").setValue(winnerPseudo)
+                        lobbyRef.child("turn_history").get().addOnSuccessListener { snapshot ->
+                            val updatedHistory = mutableListOf<String>()
+                            snapshot.children.forEach { snap ->
+                                snap.getValue(String::class.java)?.let { updatedHistory.add(it) }
+                            }
+                            updatedHistory.add(leaverMessage)
+                            lobbyRef.child("turn_history").setValue(updatedHistory)
+                        }
+
+                        navController.navigate(Screens.Menu.name){
+                            popUpTo(Screens.Menu.name){
                                 inclusive = true
                             }
                         }
@@ -624,6 +769,4 @@ fun Online_game(
             )
         }
     }
-
-
 }
