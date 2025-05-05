@@ -38,7 +38,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -323,6 +322,7 @@ fun Online_lobby(
 ){
     //TODO : afficher la salle d'attente avec les deux joueurs
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     var player1 by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
@@ -346,6 +346,12 @@ fun Online_lobby(
             }else if (player2.isNotEmpty()){
                 lobbyRef.child("status").setValue("ready")
             }
+
+            if(status == "deleted" && !isHost){
+                showDialog = true
+            }
+
+            Log.i("TAG", "Online_lobby: datachanged : $lobbyRef $player1 $player2 $password $status")
         }
         override fun onCancelled(error: DatabaseError) {
             errorMessage = error.message
@@ -365,6 +371,23 @@ fun Online_lobby(
             .addOnSuccessListener {
                 currentUidName = it.get("pseudo").toString()
             }
+    }
+
+    if(showDialog){
+        AlertDialog(
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+            onDismissRequest = { showDialog = false },
+            title = { Text(text = "Attention") },
+            text = { Text(text = "L'hôte a quitté la partie. Redirection...") },
+            confirmButton = {
+                Button(onClick = {
+                    showDialog = false
+                    navController.popBackStack(Screens.Menu.name,inclusive = false)
+                }) {
+                    Text(text = "OK")
+                }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
@@ -411,6 +434,7 @@ fun Online_lobby(
                 Button(
                     onClick = {
                         if(isHost){
+                            lobbyRef.child("status").setValue("deleted")
                             lobbyRef.removeValue()
                                 .addOnCompleteListener {
                                     Log.i("TAG", "Online_lobby: partie supprimée")
@@ -638,7 +662,7 @@ fun Online_game(
                 }
                 if (isFinished){
                     item {
-                        val player = if(playerTurn == 1) player1 else player2
+                        val player = if(playerTurn == 0) player1 else player2
                         Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+ stringResource(R.string.win_offline))
                     }
                 }

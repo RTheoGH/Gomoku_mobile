@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -153,7 +154,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     modifier = Modifier.padding(4.dp).size(32.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Add,
+                        imageVector = Icons.Filled.PersonAdd,
                         contentDescription = "Add",
                         modifier = Modifier.padding(4.dp).size(32.dp)
                     )

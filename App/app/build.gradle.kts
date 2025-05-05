@@ -73,6 +73,8 @@ dependencies {
 //    implementation("com.google.firebase:firebase-firestore:24.10.0")
 //    implementation("com.google.firebase:firebase-common:21.1.1")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
