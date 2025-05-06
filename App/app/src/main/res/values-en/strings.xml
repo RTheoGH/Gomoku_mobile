@@ -39,7 +39,7 @@
     <string name="player2">Player 2</string>
     <string name="play">Play</string>
     <string name="played_in">played in</string>
-    <string name="win_offline">won the game!</string>
+    <string name="win">won the game!</string>
     <string name="game_start_message">Game start !</string>
     <string name="game_over">Game over !</string>
     <string name="replay">Play again</string>

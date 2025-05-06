@@ -34,13 +34,14 @@ import com.example.gomoku.Back
 import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 @Composable
 fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: FirebaseFirestore){
     var leaderboard by remember { mutableStateOf(listOf<User>()) }
 
     LaunchedEffect(Unit) {
-        db.collection("users").orderBy("elo").get()
+        db.collection("users").orderBy("elo", Query.Direction.DESCENDING).get()
             .addOnSuccessListener { res ->
                 val users = res.documents.mapNotNull { doc ->
                     val pseudo = doc.data?.get("pseudo").toString()

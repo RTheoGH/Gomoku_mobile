@@ -213,6 +213,7 @@ fun Recup_request(
 @Composable
 fun Recup_friend(
     friend : String,
+    elos : Map<String, Int>,
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onRefresh: () -> Unit
@@ -237,8 +238,10 @@ fun Recup_friend(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Row{
-                Text("") // TODO : recuperer elo de l'ami ?
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Custom_card(elos[friend].toString())
                 IconButton(
                     onClick = {
                         remove_friend(auth, db, friend, onRefresh)

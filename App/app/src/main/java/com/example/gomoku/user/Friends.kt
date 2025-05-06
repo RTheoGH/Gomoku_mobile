@@ -32,6 +32,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
     var friends = remember { mutableStateListOf<String>() }
     var requests = remember { mutableStateListOf<String>() }
+    var elos = remember { mutableMapOf<String, Int>() }
 
     fun refresh() {
         loadFriendsAndRequests(auth, db) { newFriends, newRequests ->
@@ -44,6 +45,16 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
     LaunchedEffect(Unit) {
         refresh()
+    }
+
+    friends.forEach { friend ->
+        db.collection("users").whereEqualTo("pseudo", friend).get()
+            .addOnSuccessListener { res ->
+                elos[friend] = res.documents.first().get("elo").toString().toInt()
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Friends: Error getting elo")
+            }
     }
 
     Column(
@@ -84,7 +95,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
         ) {
             items(friends) { friend ->
                 Log.i("TAG", "Friends: $friend")
-                Recup_friend(friend,auth,db, onRefresh = { refresh() })
+                Recup_friend(friend,elos,auth,db, onRefresh = { refresh() })
             }
         }
     }

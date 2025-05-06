@@ -38,7 +38,7 @@
     <string name="player2">Joueur 2</string>
     <string name="play">Jouer</string>
     <string name="played_in">a joué en</string>
-    <string name="win_offline">a gagné la partie !</string>
+    <string name="win">a gagné la partie !</string>
     <string name="game_start_message">Début de la partie !</string>
     <string name="game_over">Partie terminée !</string>
     <string name="replay">Rejouer</string>

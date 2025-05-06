@@ -161,7 +161,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                 if (isFinished){
                     item {
                         val player = if(playerTurn == 1) player1 else player2
-                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+stringResource(R.string.win_offline))
+                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+stringResource(R.string.win))
                     }
                 }
             }
@@ -171,7 +171,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
                     title = { Text(text = stringResource(R.string.game_over)) },
-                    text = { Text(text = winner+" "+stringResource(R.string.win_offline)) },
+                    text = { Text(text = winner+" "+stringResource(R.string.win)) },
                     confirmButton = {
                         Button(onClick = {
                             showDialog = false

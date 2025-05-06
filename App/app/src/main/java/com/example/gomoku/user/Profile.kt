@@ -14,12 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,9 +52,12 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
-fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?){
+fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?) {
     //TODO : Meilleur visuel ?
     val context = LocalContext.current
 
@@ -57,9 +65,16 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
     var pseudo by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
+    var friends by remember { mutableStateOf(listOf<String>()) }
 
     var isMe by remember { mutableStateOf(false) }
-    recup_moi(auth,db){
+    var isFriend by remember { mutableStateOf(false) }
+
+    // timestamp et +/- elo_change
+    var match_history = remember { mutableStateMapOf<String, String>() }
+    val scrollState = rememberScrollState()
+
+    recup_moi(auth, db) {
         isMe = it == p
     }
 
@@ -72,6 +87,41 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             Log.i("TAG", "Profile: Error")
         }
 
+    db.collection("users").document(auth.currentUser!!.uid).get()
+        .addOnSuccessListener { res ->
+            friends = res.data!!["friends"] as List<String>
+            isFriend = friends.contains(p)
+        }
+        .addOnFailureListener {
+            Log.i("TAG", "Profile: Error getting own friends")
+        }
+
+    LaunchedEffect(Unit) {
+        db.collection("matches").whereArrayContains("players", p!!).get()
+            .addOnSuccessListener { res ->
+                res.documents.forEach { doc ->
+                    val data = doc.data ?: return@forEach
+
+                    val timestamp = data["timestamp"]
+                    val winner = data["winner"]
+                    val elo_change = (data["elo_change"] as? Long)?.toInt() ?: 0
+
+                    Log.i("TAG", "Profile_matches: $timestamp $winner $elo_change")
+
+                    val string_elo = if (winner == p) "+${elo_change}" else "-${elo_change}"
+                    val formattedDate = if (timestamp is Timestamp) {
+                        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                        sdf.format(timestamp.toDate())
+                    } else {
+                        timestamp.toString()
+                    }
+                    match_history[formattedDate] = string_elo
+                }
+            }.addOnFailureListener {
+                Log.i("TAG", "Profile: Error getting match history")
+            }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
     ) {
@@ -79,7 +129,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
-        ){
+        ) {
             Back(navController)
 
             Icon(
@@ -88,7 +138,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 modifier = Modifier.padding(4.dp).size(72.dp)
             )
 
-            if(isMe) {
+            if (isMe) {
                 IconButton(
                     onClick = { navController.navigate(Screens.EditProfile.name) },
                     modifier = Modifier.padding(4.dp).size(32.dp)
@@ -99,7 +149,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                         modifier = Modifier.padding(4.dp).size(32.dp)
                     )
                 }
-            }else{
+            } else {
                 Spacer(modifier = Modifier.padding(4.dp).width(32.dp))
             }
         }
@@ -116,7 +166,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             Text(text = "Elo")
             Custom_card(elo.toString())
 
-            if(!isMe){
+            if (!isMe && !isFriend) {
                 IconButton(
                     onClick = {
                         val current_user = auth.currentUser!!
@@ -159,16 +209,38 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                         modifier = Modifier.padding(4.dp).size(32.dp)
                     )
                 }
+            }else{
+                Spacer(modifier = Modifier.padding(4.dp).width(32.dp))
             }
 
             Text(text = erreur)
+        }
 
-            Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            //TODO : Afficher les parties jouées
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {  }
+        Text(text = "Historique des parties")
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Log.i("TAG", "Match_history: $match_history")
+            items(match_history.toList()) { (date, elo) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = date)
+                        Text(
+                            text = elo,
+                            color = if (elo.startsWith("+")) Color.Green else Color.Red
+                        )
+                    }
+                }
+            }
         }
     }
 }

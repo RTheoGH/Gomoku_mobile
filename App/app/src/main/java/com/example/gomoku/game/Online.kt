@@ -1,6 +1,8 @@
 package com.example.gomoku.game
 
 import android.annotation.SuppressLint
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +59,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
@@ -541,6 +544,52 @@ fun Online_game(
             winner = snapshot.child("winner").getValue(String::class.java) ?: ""
             if(winner != "" && isFinished){
                 showDialogWin = true
+
+                val winnerUid = if(playerTurn == 0) player1uid else player2uid
+                val loserUid = if(playerTurn == 0) player2uid else player1uid
+
+                val winnerRef = db.collection("users").document(winnerUid)
+                val loserRef = db.collection("users").document(loserUid)
+
+                var eloChange = 0
+
+                db.runTransaction { transaction ->
+                    val winnerSnapshot = transaction.get(winnerRef)
+                    val loserSnapshot = transaction.get(loserRef)
+
+                    val winnerElo = winnerSnapshot.getLong("elo") ?: 0
+                    val loserElo = loserSnapshot.getLong("elo") ?: 0
+
+                    val coeff = 30
+                    val score = 1.0 / (1 + Math.pow(10.0,
+                        ((loserElo - winnerElo) / 400).toDouble()
+                    ))
+                    eloChange = (coeff * (1 - score)).toInt()
+
+                    transaction.update(winnerRef, "elo", winnerElo + eloChange)
+                    transaction.update(loserRef, "elo", loserElo - eloChange)
+
+                    null
+                }.addOnSuccessListener {
+                    Log.i("TAG", "Elo updated")
+
+                    val matchData = mapOf(
+                        "player1" to player1,
+                        "player2" to player2,
+                        "players" to listOf(player1, player2),
+                        "winner" to winner,
+                        "elo_change" to eloChange,
+                        "timestamp" to FieldValue.serverTimestamp()
+                    )
+                    db.collection("matches").add(matchData)
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        lobbyRef.removeValue()
+                            .addOnSuccessListener { Log.i("TAG", "Partie supprimée") }
+                            .addOnFailureListener { Log.i("TAG", "Partie non supprimée") }
+                    },10000)
+
+                }.addOnFailureListener { Log.i("TAG", "Elo update failed") }
             }
         }
         override fun onCancelled(error: DatabaseError) {
@@ -625,16 +674,12 @@ fun Online_game(
                         println(turn_history)
                         lobbyRef.child("turn_history").setValue(turn_history)
 
-
                         if (check_win(board, x, y, 15)) {
                             isFinished = true
                             showDialogWin = true
                             winner = if(playerTurn == 0) player1 else player2
                             lobbyRef.child("status").setValue("finished")
                             lobbyRef.child("winner").setValue(winner)
-
-                            println("gagné !!!!!!")
-                            //TODO : enregistrer la partie dans l'historique
                         }
 
                         playerTurn = 1 - playerTurn
@@ -663,7 +708,7 @@ fun Online_game(
                 if (isFinished){
                     item {
                         val player = if(playerTurn == 0) player1 else player2
-                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+ stringResource(R.string.win_offline))
+                        Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+ stringResource(R.string.win))
                     }
                 }
             }
@@ -714,23 +759,8 @@ fun Online_game(
                     properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
                     onDismissRequest = { showDialogWin = false },
                     title = { Text(text = stringResource(R.string.game_over)) },
-                    text = { Text(text = winner+" "+stringResource(R.string.win_offline)) },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                showDialogWin = false
-                                val route = "${Screens.Offline_game.name}/$player1/$player2"
-                                navController.navigate(route){
-                                    popUpTo(route){
-                                        inclusive = true
-                                    }
-                                }
-                            },
-                            enabled = false
-                        ) {
-                            Text(text = stringResource(R.string.replay))
-                        }
-                    },
+                    text = { Text(text = winner+" "+stringResource(R.string.win)) },
+                    confirmButton = {},
                     dismissButton = {
                         Button(onClick = {
                             showDialogWin = false
