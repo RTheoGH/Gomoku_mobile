@@ -3,6 +3,7 @@ package com.example.gomoku
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,9 +21,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,22 +41,31 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun Back(navController: NavHostController){
     IconButton(
         onClick = { navController.navigate(Screens.Menu.name) },
-        modifier = Modifier.padding(4.dp).size(32.dp)
+        modifier = Modifier
+            .padding(4.dp)
+            .size(32.dp)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back",
-            modifier = Modifier.padding(4.dp).size(32.dp)
+            modifier = Modifier
+                .padding(4.dp)
+                .size(32.dp)
         )
     }
 }
 
 @Composable
-fun Custom_row(i : Int, timer : String, player : String){
+fun Custom_row(i : Int, timer : String, player : String, pp : String){
+    val context = LocalContext.current
     Row(
         modifier = when (i) {
-            1 -> Modifier.fillMaxWidth().padding(end = 48.dp)
-            2 -> Modifier.fillMaxWidth().padding(start = 48.dp)
+            1 -> Modifier
+                .fillMaxWidth()
+                .padding(end = 48.dp)
+            2 -> Modifier
+                .fillMaxWidth()
+                .padding(start = 48.dp)
             else -> Modifier.fillMaxWidth()
         },
         horizontalArrangement = when(i) {
@@ -65,8 +78,20 @@ fun Custom_row(i : Int, timer : String, player : String){
         when (i) {
             1 -> {
                 if(timer != "") Custom_card(timer)
+                if(pp != ""){
+                    val resId = remember(pp) {
+                        context.resources.getIdentifier(pp, "drawable", context.packageName)
+                    }
+                    Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = "Profile picture",
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
                 Custom_card(player)
-                Canvas(modifier = Modifier.size(30.dp).padding(4.dp)){
+                Canvas(modifier = Modifier
+                    .size(30.dp)
+                    .padding(4.dp)){
                     drawCircle(
                         color = Color.Black,
                         radius = size.minDimension / 2
@@ -79,7 +104,9 @@ fun Custom_row(i : Int, timer : String, player : String){
             }
 
             2 -> {
-                Canvas(modifier = Modifier.size(30.dp).padding(4.dp)){
+                Canvas(modifier = Modifier
+                    .size(30.dp)
+                    .padding(4.dp)){
                     drawCircle(
                         color = Color.Black,
                         radius = size.minDimension / 2
@@ -90,6 +117,16 @@ fun Custom_row(i : Int, timer : String, player : String){
                     )
                 }
                 Custom_card(player)
+                if(pp != ""){
+                    val resId = remember(pp) {
+                        context.resources.getIdentifier(pp, "drawable", context.packageName)
+                    }
+                    Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = "Profile picture",
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
                 if(timer != "") Custom_card(timer)
             }
         }
@@ -170,7 +207,9 @@ fun Recup_request(
             Text(
                 text = request,
                 fontSize = 16.sp,
-                modifier = Modifier.weight(1f).padding(start = 8.dp, end = 16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 16.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -213,11 +252,13 @@ fun Recup_request(
 @Composable
 fun Recup_friend(
     friend : String,
+    pps : Map<String, String>,
     elos : Map<String, Int>,
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onRefresh: () -> Unit
 ){
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,10 +272,25 @@ fun Recup_friend(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
+            Log.i("TAG", "Verif_images: $friend")
+            Log.i("TAG", "Verif_images: $pps")
+            Log.i("TAG", "Verif_images: ${pps[friend]}")
+            if(pps[friend] != null && pps[friend] != ""){
+                val resId = remember(pps[friend]) {
+                    context.resources.getIdentifier(pps[friend], "drawable", context.packageName)
+                }
+                Image(
+                    painter = painterResource(id = resId),
+                    contentDescription = "Profile picture",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
             Text(
                 text = friend,
                 fontSize = 16.sp,
-                modifier = Modifier.weight(1f).padding(start = 8.dp, end = 16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 16.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

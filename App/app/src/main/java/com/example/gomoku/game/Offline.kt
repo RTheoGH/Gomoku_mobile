@@ -119,7 +119,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Custom_row(1,"",player2)
+            Custom_row(1,"",player2,"")
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
             Board(
                 board = board,
@@ -150,7 +150,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                 }
             )
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
-            Custom_row(2,"",player1)
+            Custom_row(2,"",player1,"")
 
             Spacer(modifier = Modifier.padding(vertical = 16.dp))
 

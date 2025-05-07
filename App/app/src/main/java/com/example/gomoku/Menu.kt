@@ -1,6 +1,7 @@
 package com.example.gomoku
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -36,14 +39,17 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
+    var pp by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
     if(auth.currentUser != null){
         Log.i("TAG", "Current user: ${auth.currentUser!!.uid}")
         db.collection("users").document(auth.currentUser!!.uid).get()
             .addOnSuccessListener { res ->
                 Log.i("TAG", "Profile: ${res.data}")
+                pp = res.data!!["profile_pic"].toString()
                 elo = res.data!!["elo"].toString().toInt()
             }
             .addOnFailureListener {
@@ -88,11 +94,22 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                         onClick = { expanded = true },
                         modifier = Modifier.padding(4.dp).size(72.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "Account",
-                            modifier = Modifier.size(72.dp)
-                        )
+                        if(pp != "" && auth.currentUser != null){
+                            val resId = remember(pp) {
+                                context.resources.getIdentifier(pp, "drawable", context.packageName)
+                            }
+                            Image(
+                                painter = painterResource(id = resId),
+                                contentDescription = "Profile picture",
+                                modifier = Modifier.size(72.dp)
+                            )
+                        }else{
+                            Icon(
+                                imageVector = Icons.Filled.AccountCircle,
+                                contentDescription = "Account",
+                                modifier = Modifier.size(72.dp)
+                            )
+                        }
                     }
 
                     DropdownMenu(

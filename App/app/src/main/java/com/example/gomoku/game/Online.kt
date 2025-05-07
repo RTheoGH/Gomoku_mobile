@@ -61,6 +61,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.math.abs
 
 @Composable
 fun Online(pad : PaddingValues, navController: NavHostController){
@@ -149,11 +150,14 @@ fun Online_create(
                     val lobbyId = lobby_name.trim()
                     val uid = auth.currentUser!!.uid
                     var uid_name = ""
+                    var pp = ""
 
                     if(lobbyId.isNotEmpty()){
                         db.collection("users").document(uid).get()
                             .addOnSuccessListener {
                                 uid_name = it.get("pseudo").toString()
+                                pp = it.get("profile_pic").toString()
+
                                 Log.i("TAG", "Online_create: $uid_name")
 
                                 val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
@@ -167,7 +171,8 @@ fun Online_create(
 
                                 val player1Data = mapOf(
                                     "uid" to uid,
-                                    "pseudo" to uid_name
+                                    "pseudo" to uid_name,
+                                    "profile_pic" to pp
                                 )
 
                                 val lobbyData = mapOf(
@@ -260,6 +265,7 @@ fun Online_join(
                     val enteredPassword = password.trim()
                     val uid = auth.currentUser!!.uid
                     var uid_name = ""
+                    var pp = ""
 
                     if(lobbyId.isEmpty() || uid == ""){
                         errorMessage = "Veuillez remplir tous les champs"
@@ -269,6 +275,7 @@ fun Online_join(
                     db.collection("users").document(uid).get()
                         .addOnSuccessListener { userDoc ->
                             uid_name = userDoc.get("pseudo").toString()
+                            pp = userDoc.get("profile_pic").toString()
 
                             val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
                             lobbyRef.get().addOnSuccessListener { snapshot ->
@@ -288,7 +295,8 @@ fun Online_join(
                                     else -> {
                                         val player2Data = mapOf(
                                             "uid" to uid,
-                                            "pseudo" to uid_name
+                                            "pseudo" to uid_name,
+                                            "profile_pic" to pp
                                         )
 
                                         lobbyRef.child("player2").setValue(player2Data)
@@ -484,11 +492,14 @@ fun Online_game(
     var showDialogWin by remember { mutableStateOf(false) }
     var showDialogLeave by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var transactionDone by remember { mutableStateOf(false) }
 
     var player1 by remember { mutableStateOf("") }
     var player1uid by remember { mutableStateOf("") }
+    var player1pp by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
     var player2uid by remember { mutableStateOf("") }
+    var player2pp by remember { mutableStateOf("") }
 
     var winner by remember { mutableStateOf("") }
 
@@ -520,8 +531,11 @@ fun Online_game(
         override fun onDataChange(snapshot: DataSnapshot) {
             player1 = snapshot.child("player1").child("pseudo").getValue(String::class.java) ?: ""
             player1uid = snapshot.child("player1").child("uid").getValue(String::class.java) ?: ""
+            player1pp = snapshot.child("player1").child("profile_pic").getValue(String::class.java) ?: ""
             player2 = snapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
             player2uid = snapshot.child("player2").child("uid").getValue(String::class.java) ?: ""
+            player2pp = snapshot.child("player2").child("profile_pic").getValue(String::class.java) ?: ""
+
             val boardSnapshot = snapshot.child("board")
             val newBoard = MutableList(15) { MutableList(15) { GomokuCell(0, 0, CellState.EMPTY) } }
 
@@ -542,32 +556,35 @@ fun Online_game(
             isFinished = snapshot.child("status").getValue(String::class.java) == "finished"
 
             winner = snapshot.child("winner").getValue(String::class.java) ?: ""
-            if(winner != "" && isFinished){
+            if(winner != "" && isFinished && !transactionDone){
                 showDialogWin = true
+                transactionDone = true
 
-                val winnerUid = if(playerTurn == 0) player1uid else player2uid
-                val loserUid = if(playerTurn == 0) player2uid else player1uid
+                val currentUid = auth.currentUser!!.uid
+                val isWinner = currentUid == player1uid && winner == player1 || currentUid == player2uid && winner == player2
 
-                val winnerRef = db.collection("users").document(winnerUid)
-                val loserRef = db.collection("users").document(loserUid)
-
+                val myRef = db.collection("users").document(currentUid)
                 var eloChange = 0
 
                 db.runTransaction { transaction ->
-                    val winnerSnapshot = transaction.get(winnerRef)
-                    val loserSnapshot = transaction.get(loserRef)
 
-                    val winnerElo = winnerSnapshot.getLong("elo") ?: 0
-                    val loserElo = loserSnapshot.getLong("elo") ?: 0
+                    val snapshotT = transaction.get(myRef)
+                    val myElo = snapshotT.getLong("elo") ?: 0
 
-                    val coeff = 30
-                    val score = 1.0 / (1 + Math.pow(10.0,
-                        ((loserElo - winnerElo) / 400).toDouble()
-                    ))
-                    eloChange = (coeff * (1 - score)).toInt()
+                    val k = 32
 
-                    transaction.update(winnerRef, "elo", winnerElo + eloChange)
-                    transaction.update(loserRef, "elo", loserElo - eloChange)
+                    val expectedScore = if(isWinner) 1.0 else 0.0
+                    val opponentUid = if (currentUid == player1uid) player2uid else player1uid
+                    val opponentRef = db.collection("users").document(opponentUid)
+                    val opponentSnapshot = transaction.get(opponentRef)
+                    val opponentElo = opponentSnapshot.getLong("elo") ?: 0
+
+                    val score = 1.0 / (1.0 + Math.pow(10.0, (opponentElo - myElo).toDouble() / 400.0))
+                    eloChange = (k * (expectedScore - score)).toInt()
+
+                    Log.i("TAG", "Elo change: $eloChange")
+
+                    transaction.update(myRef, "elo", myElo + eloChange)
 
                     null
                 }.addOnSuccessListener {
@@ -578,16 +595,18 @@ fun Online_game(
                         "player2" to player2,
                         "players" to listOf(player1, player2),
                         "winner" to winner,
-                        "elo_change" to eloChange,
+                        "elo_change" to abs(eloChange),
                         "timestamp" to FieldValue.serverTimestamp()
                     )
                     db.collection("matches").add(matchData)
 
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        lobbyRef.removeValue()
-                            .addOnSuccessListener { Log.i("TAG", "Partie supprimée") }
-                            .addOnFailureListener { Log.i("TAG", "Partie non supprimée") }
-                    },10000)
+                    if(isWinner) {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            lobbyRef.removeValue()
+                                .addOnSuccessListener { Log.i("TAG", "Partie supprimée") }
+                                .addOnFailureListener { Log.i("TAG", "Partie non supprimée") }
+                        }, 10000)
+                    }
 
                 }.addOnFailureListener { Log.i("TAG", "Elo update failed") }
             }
@@ -649,7 +668,7 @@ fun Online_game(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Custom_row(1,"",player2)
+            Custom_row(1,"",player2,player2pp)
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
             Board(
@@ -690,7 +709,7 @@ fun Online_game(
             )
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
-            Custom_row(2,"",player1)
+            Custom_row(2,"",player1,player1pp)
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 

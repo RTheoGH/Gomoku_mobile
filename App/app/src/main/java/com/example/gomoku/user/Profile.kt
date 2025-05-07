@@ -1,8 +1,14 @@
 package com.example.gomoku.user
 
+import android.annotation.SuppressLint
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -24,6 +31,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,8 +46,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -56,6 +67,7 @@ import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@SuppressLint("DiscouragedApi")
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?) {
     //TODO : Meilleur visuel ?
@@ -64,6 +76,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
     var erreur by remember { mutableStateOf("") }
 
     var pseudo by remember { mutableStateOf("") }
+    var pp by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
     var friends by remember { mutableStateOf(listOf<String>()) }
 
@@ -72,31 +85,43 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
     // timestamp et +/- elo_change
     var match_history = remember { mutableStateMapOf<String, String>() }
+
     val scrollState = rememberScrollState()
+    var expanded by remember { mutableStateOf(false) }
+    val drawableOptions = listOf(
+        "chat",
+        "heureux",
+        "mordu",
+        "ohmondieu",
+        "panda",
+        "ressentiment"
+    )
 
     recup_moi(auth, db) {
         isMe = it == p
     }
 
-    db.collection("users").whereEqualTo("pseudo", p).get()
-        .addOnSuccessListener { res ->
-            pseudo = res.documents.first().data!!["pseudo"].toString()
-            elo = res.documents.first().data!!["elo"].toString().toInt()
-        }
-        .addOnFailureListener {
-            Log.i("TAG", "Profile: Error")
-        }
+    LaunchedEffect(p) {
+        db.collection("users").whereEqualTo("pseudo", p).get()
+            .addOnSuccessListener { res ->
+                pseudo = res.documents.first().data!!["pseudo"].toString()
+                pp = res.documents.first().data!!["profile_pic"].toString()
+                elo = res.documents.first().data!!["elo"].toString().toInt()
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Profile: Error")
+            }
 
-    db.collection("users").document(auth.currentUser!!.uid).get()
-        .addOnSuccessListener { res ->
-            friends = res.data!!["friends"] as List<String>
-            isFriend = friends.contains(p)
-        }
-        .addOnFailureListener {
-            Log.i("TAG", "Profile: Error getting own friends")
-        }
+        db.collection("users").document(auth.currentUser!!.uid).get()
+            .addOnSuccessListener { res ->
+                friends = res.data!!["friends"] as List<String>
+                isFriend = friends.contains(p)
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Profile: Error getting own friends")
+            }
 
-    LaunchedEffect(Unit) {
+
         db.collection("matches").whereArrayContains("players", p!!).get()
             .addOnSuccessListener { res ->
                 res.documents.forEach { doc ->
@@ -106,7 +131,8 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     val winner = data["winner"]
                     val elo_change = (data["elo_change"] as? Long)?.toInt() ?: 0
 
-                    Log.i("TAG", "Profile_matches: $timestamp $winner $elo_change")
+                    //Log.i("TAG", "Profile_matches: $timestamp $winner $elo_change")
+                    Log.i("TAG", "$elo_change")
 
                     val string_elo = if (winner == p) "+${elo_change}" else "-${elo_change}"
                     val formattedDate = if (timestamp is Timestamp) {
@@ -132,25 +158,101 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
         ) {
             Back(navController)
 
-            Icon(
-                imageVector = Icons.Filled.AccountCircle,
-                contentDescription = "Account",
-                modifier = Modifier.padding(4.dp).size(72.dp)
-            )
+            val resId = remember(pp) {
+                context.resources.getIdentifier(pp, "drawable", context.packageName)
+            }
+
+            if (isMe) {
+                Box {
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.padding(4.dp).size(72.dp)
+                    ) {
+                        if (resId != 0) {
+                            Image(
+                                painter = painterResource(id = resId),
+                                contentDescription = "Profile picture",
+                                modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.AccountCircle,
+                                contentDescription = "Account",
+                                modifier = Modifier.padding(4.dp).size(72.dp)
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        drawableOptions.forEach { imageName ->
+                            val option = context.resources.getIdentifier(
+                                imageName,
+                                "drawable",
+                                context.packageName
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    pp = imageName
+                                    expanded = false
+
+                                    val user = auth.currentUser!!
+                                    db.collection("users").document(user.uid).update("profile_pic", imageName)
+                                        .addOnSuccessListener { Log.i("TAG", "Profile: Profile picture updated") }
+                                        .addOnFailureListener { Log.i("TAG", "Profile: Error updating profile picture") }
+                                },
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Image(
+                                            painter = painterResource(id = option),
+                                            contentDescription = "Profile picture",
+                                            modifier = Modifier.size(32.dp).clip(CircleShape)
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            } else {
+                if (resId != 0) {
+                    Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = "Profile picture",
+                        modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.AccountCircle,
+                        contentDescription = "Account",
+                        modifier = Modifier.padding(4.dp).size(72.dp)
+                    )
+                }
+            }
 
             if (isMe) {
                 IconButton(
                     onClick = { navController.navigate(Screens.EditProfile.name) },
-                    modifier = Modifier.padding(4.dp).size(32.dp)
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(32.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
                         contentDescription = "Edit",
-                        modifier = Modifier.padding(4.dp).size(32.dp)
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(32.dp)
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.padding(4.dp).width(32.dp))
+                Spacer(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .width(32.dp)
+                )
             }
         }
 
@@ -201,16 +303,22 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                     }
                             }
                     },
-                    modifier = Modifier.padding(4.dp).size(32.dp)
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(32.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.PersonAdd,
                         contentDescription = "Add",
-                        modifier = Modifier.padding(4.dp).size(32.dp)
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(32.dp)
                     )
                 }
             }else{
-                Spacer(modifier = Modifier.padding(4.dp).width(32.dp))
+                Spacer(modifier = Modifier
+                    .padding(4.dp)
+                    .width(32.dp))
             }
 
             Text(text = erreur)
@@ -223,14 +331,17 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Log.i("TAG", "Match_history: $match_history")
             items(match_history.toList()) { (date, elo) ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = date)
@@ -245,11 +356,13 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
     }
 }
 
+@SuppressLint("DiscouragedApi")
 @Composable
 fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore) {
     val context = LocalContext.current
 
     var pseudo by remember { mutableStateOf("") }
+    var pp by remember { mutableStateOf("") }
     var current_pseudo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var new_password by remember { mutableStateOf("") }
@@ -269,6 +382,7 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             .addOnSuccessListener { res ->
                 Log.i("TAG", "Profile: ${res.data}")
                 pseudo = res.data!!["pseudo"].toString()
+                pp = res.data!!["profile_pic"].toString()
                 current_pseudo = pseudo
             }
             .addOnFailureListener {
@@ -288,16 +402,26 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            IconButton(
-                onClick = {
-                    //TODO ?
-                },
-                modifier = Modifier.padding(4.dp).size(72.dp)
-            ){
+            val resId = remember(pp){
+                context.resources.getIdentifier(pp, "drawable", context.packageName)
+            }
+
+            if(pp != ""){
+                Image(
+                    painter = painterResource(id = resId),
+                    contentDescription = "Profile picture",
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .padding(4.dp)
+                        .size(72.dp)
+                )
+            }else{
                 Icon(
                     imageVector = Icons.Filled.AccountCircle,
                     contentDescription = "Account",
-                    modifier = Modifier.padding(4.dp).size(72.dp)
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(72.dp)
                 )
             }
 
@@ -364,7 +488,9 @@ fun EditProfile(pad : PaddingValues, navController: NavHostController, auth: Fir
                             }else if(password_edit){
                                 Toast.makeText(context, context.getString(R.string.edit_m), Toast.LENGTH_SHORT).show()
                             }
-                            navController.navigate(Screens.Profile.name)
+                            navController.navigate(Screens.Profile.name) {
+                                popUpTo(Screens.EditProfile.name) { inclusive = true }
+                            }
                         }
 
                         db.collection("users").whereEqualTo("pseudo", pseudo).get().addOnSuccessListener { res ->

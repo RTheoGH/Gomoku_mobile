@@ -33,6 +33,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
     var friends = remember { mutableStateListOf<String>() }
     var requests = remember { mutableStateListOf<String>() }
     var elos = remember { mutableMapOf<String, Int>() }
+    var pps = remember { mutableMapOf<String, String>() }
 
     fun refresh() {
         loadFriendsAndRequests(auth, db) { newFriends, newRequests ->
@@ -50,6 +51,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
     friends.forEach { friend ->
         db.collection("users").whereEqualTo("pseudo", friend).get()
             .addOnSuccessListener { res ->
+                pps[friend] = res.documents.first().get("profile_pic").toString()
                 elos[friend] = res.documents.first().get("elo").toString().toInt()
             }
             .addOnFailureListener {
@@ -57,12 +59,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
             }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(pad)
-            .padding(8.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         Back(navController)
 
         Text(
@@ -95,7 +92,7 @@ fun Friends(pad : PaddingValues, navController: NavHostController, auth: Firebas
         ) {
             items(friends) { friend ->
                 Log.i("TAG", "Friends: $friend")
-                Recup_friend(friend,elos,auth,db, onRefresh = { refresh() })
+                Recup_friend(friend,pps,elos,auth,db, onRefresh = { refresh() })
             }
         }
     }
