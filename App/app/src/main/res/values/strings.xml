@@ -43,4 +43,23 @@
     <string name="game_over">Partie terminée !</string>
     <string name="replay">Rejouer</string>
     <string name="leave">Quitter</string>
+    <string name="no_requests">Aucune nouvelles demandes</string>
+    <string name="no_friends">Aucun amis</string>
+    <string name="online_create">Nouvelle salle</string>
+    <string name="online_join">Rejoindre une salle</string>
+    <string name="online_error_existing_lobby">Salle déjà existante</string>
+    <string name="online_error_dataroom_get">Erreur lors de la récupération des données de l\'utilisateur</string>
+    <string name="online_name">Nom de la salle</string>
+    <string name="online_not_found">Salle introuvable</string>
+    <string name="online_full">Partie pleine</string>
+    <string name="online_already_in">Vous êtes déjà dans cette partie</string>
+    <string name="online_error_join">Erreur lors de la connexion à la salle</string>
+    <string name="online_error_access_db">Erreur de connexion à la base de données</string>
+    <string name="warning">Attention</string>
+    <string name="host_leave">L\'hôte a quitté la partie. Redirection...</string>
+    <string name="room">Salle</string>
+    <string name="ask_leave">Voulez-vous vraiment quitter la partie ?</string>
+    <string name="leave_message">a quitté la partie.</string>
+    <string name="stay">Rester</string>
+    <string name="about">A propos</string>
 </resources>

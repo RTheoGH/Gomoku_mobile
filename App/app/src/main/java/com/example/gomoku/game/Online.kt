@@ -45,13 +45,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_card
 import com.example.gomoku.Custom_row
+import com.example.gomoku.ModeText
 import com.example.gomoku.R
+import com.example.gomoku.SecondaryText
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
@@ -68,14 +71,14 @@ fun Online(pad : PaddingValues, navController: NavHostController){
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)){
         Back(navController)
 
-        Spacer(modifier = Modifier.height(164.dp))
+        Spacer(modifier = Modifier.height(112.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Text("Mode : Online")
+            ModeText("Online")
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
@@ -83,7 +86,7 @@ fun Online(pad : PaddingValues, navController: NavHostController){
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
-                Text(text = "créé")
+                Text(text = stringResource(R.string.online_create))
             }
             Button(
                 onClick = {
@@ -91,11 +94,10 @@ fun Online(pad : PaddingValues, navController: NavHostController){
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
-                Text(text = "rejoint")
+                Text(text = stringResource(R.string.online_join))
             }
         }
     }
-    //TODO : afficher les boutons pour créer une partie ou rejoindre une partie
 }
 
 @Composable
@@ -106,6 +108,7 @@ fun Online_create(
     db: FirebaseFirestore,
     rdb: FirebaseDatabase
 ){
+    val context = LocalContext.current
     var lobby_name by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -114,33 +117,35 @@ fun Online_create(
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         Back(navController)
 
-        Spacer(modifier = Modifier.height(128.dp))
+        Spacer(modifier = Modifier.height(112.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Text("Mode : Online")
+            ModeText("Online")
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = lobby_name,
                 onValueChange = { if(it.length <= 20) lobby_name = it },
-                label = { Text(text = "Nom de la partie") },
+                label = { Text(text = stringResource(R.string.online_name)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { if(it.length <= 10) password = it },
-                label = { Text(text = "Mot de passe") },
-                modifier = Modifier.padding(4.dp)
+                label = { Text(text = stringResource(R.string.mdp)) },
+                modifier = Modifier.padding(4.dp),
+                visualTransformation = PasswordVisualTransformation(),
             )
 
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
+                    color = Color.Red,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -196,20 +201,19 @@ fun Online_create(
                                     Log.i("TAG", "Online_create: redirection")
                                 }.addOnFailureListener {
                                     // Lobby deja existant
-                                    errorMessage = "Lobby deja existant"
+                                    errorMessage = context.getString(R.string.online_error_existing_lobby)
                                 }
                             }.addOnFailureListener {
-                                errorMessage = "Erreur lors de la récupération des données de l'utilisateur"
-                            }
+                                errorMessage = context.getString(R.string.online_error_dataroom_get)
+11                            }
                     }
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
-                Text(text = "Creer")
+                Text(text = stringResource(R.string.online_create))
             }
         }
     }
-    //TODO : créer une partie en demandant le nom de la partie et mdp
 }
 
 @Composable
@@ -220,7 +224,8 @@ fun Online_join(
     db: FirebaseFirestore,
     rdb: FirebaseDatabase
 ){
-    //TODO : rejoindre une partie en demandant le nom de la partie et mdp
+    val context = LocalContext.current
+
     var lobby_name by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -228,33 +233,35 @@ fun Online_join(
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
         Back(navController)
 
-        Spacer(modifier = Modifier.height(128.dp))
+        Spacer(modifier = Modifier.height(112.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Mode : Online")
+            ModeText("Online")
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = lobby_name,
                 onValueChange = { if(it.length <= 20) lobby_name = it },
-                label = { Text(text = "Nom de la partie") },
+                label = { Text(text = stringResource(R.string.online_name)) },
                 modifier = Modifier.padding(4.dp)
             )
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { if(it.length <= 10) password = it },
-                label = { Text(text = "Mot de passe") },
-                modifier = Modifier.padding(4.dp)
+                label = { Text(text = stringResource(R.string.mdp)) },
+                modifier = Modifier.padding(4.dp),
+                visualTransformation = PasswordVisualTransformation()
             )
 
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
+                    color = Color.Red,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -268,7 +275,7 @@ fun Online_join(
                     var pp = ""
 
                     if(lobbyId.isEmpty() || uid == ""){
-                        errorMessage = "Veuillez remplir tous les champs"
+                        errorMessage = context.getString(R.string.error_fields)
                         return@Button
                     }
 
@@ -280,7 +287,7 @@ fun Online_join(
                             val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
                             lobbyRef.get().addOnSuccessListener { snapshot ->
                                 if (!snapshot.exists()) {
-                                    errorMessage = "Partie introuvable"
+                                    errorMessage = context.getString(R.string.online_not_found)
                                     return@addOnSuccessListener
                                 }
 
@@ -289,9 +296,9 @@ fun Online_join(
                                 val currentPlayer2 = snapshot.child("player2").child("pseudo").getValue(String::class.java)
 
                                 when{
-                                    lobbyPassword != enteredPassword -> errorMessage = "Mot de passe incorrect"
-                                    currentPlayer1 == uid_name || currentPlayer2 == uid_name -> errorMessage = "Vous êtes déjà dans cette partie"
-                                    !currentPlayer2.isNullOrEmpty() -> errorMessage = "Partie pleine"
+                                    lobbyPassword != enteredPassword -> errorMessage = context.getString(R.string.incorrect_mdp)
+                                    currentPlayer1 == uid_name || currentPlayer2 == uid_name -> errorMessage = context.getString(R.string.online_already_in)
+                                    !currentPlayer2.isNullOrEmpty() -> errorMessage = context.getString(R.string.online_full)
                                     else -> {
                                         val player2Data = mapOf(
                                             "uid" to uid,
@@ -304,17 +311,17 @@ fun Online_join(
                                                 navController.navigate(Screens.Online_lobby.name + "/$lobbyId")
                                             }
                                             .addOnFailureListener {
-                                                errorMessage = "Erreur lors de la connexion à la partie"
+                                                errorMessage = context.getString(R.string.online_error_join)
                                             }
                                     }
                                 }
                             }.addOnFailureListener {
-                                errorMessage = "Erreur de connexion à la base de données"
+                                errorMessage = context.getString(R.string.online_error_access_db)
                             }
                         }
                 }
             ){
-                Text(text = "Rejoindre")
+                Text(text = stringResource(R.string.online_join))
             }
         }
     }
@@ -331,7 +338,6 @@ fun Online_lobby(
     rdb: FirebaseDatabase,
     lobbyId: String
 ){
-    //TODO : afficher la salle d'attente avec les deux joueurs
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
@@ -388,8 +394,8 @@ fun Online_lobby(
         AlertDialog(
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
             onDismissRequest = { showDialog = false },
-            title = { Text(text = "Attention") },
-            text = { Text(text = "L'hôte a quitté la partie. Redirection...") },
+            title = { Text(text = stringResource(R.string.warning)) },
+            text = { Text(text = stringResource(R.string.host_leave)) },
             confirmButton = {
                 Button(onClick = {
                     showDialog = false
@@ -403,28 +409,31 @@ fun Online_lobby(
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
 
-        Spacer(modifier = Modifier.height(128.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Mode : Online")
+            ModeText("Online")
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Salle :")
+            SecondaryText(stringResource(R.string.room))
             Custom_card(lobbyId)
 
-            Text("MDP | Status")
-            Custom_card("$password | $status")
+            SecondaryText(stringResource(R.string.mdp))
+            Custom_card(password)
+
+            SecondaryText("Status")
+            Custom_card(status)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Joueur 1 :")
+            SecondaryText(stringResource(R.string.player1))
             Custom_card(player1)
 
-            Text("Joueur 2 :")
+            SecondaryText(stringResource(R.string.player2))
             if(player2.isNotEmpty()){
                 Custom_card(player2)
             }
@@ -434,13 +443,15 @@ fun Online_lobby(
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
+                    color = Color.Red,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
             Row(
+                modifier = Modifier.fillMaxWidth(0.45f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceBetween
             ){
                 Button(
                     onClick = {
@@ -460,16 +471,15 @@ fun Online_lobby(
                         }
                     }
                 ){
-                    Text(text = "Quitter")
+                    Text(text = stringResource(R.string.leave))
                 }
                 Button(
                     onClick = {
                         lobbyRef.child("status").setValue("started")
                     },
-                    modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
                     enabled = canStart
                 ) {
-                    Text(text = "Lancer")
+                    Text(text = stringResource(R.string.play))
                 }
             }
         }
@@ -512,8 +522,6 @@ fun Online_game(
             }
         )
     }
-
-    //TODO : envoyer le playerTurn sur realtime database ainsi que le turn_history
 
     var playerTurn by remember { mutableIntStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
@@ -800,17 +808,16 @@ fun Online_game(
             AlertDialog(
                 properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
                 onDismissRequest = { showDialogLeave = false },
-                title = { Text(text = "Quitter ?") },
-                text = { Text(text = "Voulez-vous vraiment quitter la partie ?") },
+                title = { Text(text = stringResource(R.string.leave)+" ?") },
+                text = { Text(text = stringResource(R.string.ask_leave)) },
                 confirmButton = {
                     Button(onClick = {
                         showDialogLeave = false
-                        //TODO : faire gagner l'autre joueur
                         val currentUid = auth.currentUser!!.uid
 
                         val winnerPseudo = if(currentUid == player1uid) player2 else player1
                         val leaverPseudo = if(currentUid == player1uid) player1 else player2
-                        val leaverMessage = "$leaverPseudo a quitté la partie"
+                        val leaverMessage = "$leaverPseudo "+context.getString(R.string.leave_message)
 
                         lobbyRef.child("status").setValue("finished")
                         lobbyRef.child("winner").setValue(winnerPseudo)
@@ -829,14 +836,14 @@ fun Online_game(
                             }
                         }
                     }) {
-                        Text(text = "Quitter")
+                        Text(text = stringResource(R.string.leave))
                     }
                 },
                 dismissButton = {
                     Button(onClick = {
                         showDialogLeave = false
                     }) {
-                        Text(text = "Rester")
+                        Text(text = stringResource(R.string.stay))
                     }
                 }
             )

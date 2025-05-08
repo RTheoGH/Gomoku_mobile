@@ -44,4 +44,23 @@
     <string name="game_over">Game over !</string>
     <string name="replay">Play again</string>
     <string name="leave">Leave</string>
+    <string name="no_requests">No new requests</string>
+    <string name="no_friends">No friends</string>
+    <string name="online_create">New room</string>
+    <string name="online_join">Join room</string>
+    <string name="online_error_existing_lobby">Room already exist</string>
+    <string name="online_error_dataroom_get">Error getting user infos</string>
+    <string name="online_name">Room name</string>
+    <string name="online_not_found">Room not found</string>
+    <string name="online_full">Room full</string>
+    <string name="online_already_in">Already inside the room</string>
+    <string name="online_error_join">Error connecting to the room</string>
+    <string name="online_error_access_db">Database connection error</string>
+    <string name="warning">Warning</string>
+    <string name="host_leave">The host has left the game. Redirecting...</string>
+    <string name="room">Room</string>
+    <string name="ask_leave">Are you sure you want to leave ?</string>
+    <string name="leave_message">left the game</string>
+    <string name="stay">Stay</string>
+    <string name="about">About</string>
 </resources>

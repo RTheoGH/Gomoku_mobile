@@ -16,11 +16,13 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,34 @@ fun Back(navController: NavHostController){
                 .size(32.dp)
         )
     }
+}
+
+@Composable
+fun Chargement(){
+    CircularProgressIndicator(
+        color = MaterialTheme.colorScheme.secondary,
+        trackColor = MaterialTheme.colorScheme.surfaceVariant
+    )
+}
+
+@Composable
+fun ModeText(s : String){
+    Text(
+        text = "Mode : $s",
+        fontSize = 30.sp,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(4.dp)
+    )
+}
+
+@Composable
+fun SecondaryText(text : String){
+    Text(
+        text = text,
+        fontSize = 20.sp,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.padding(4.dp)
+    )
 }
 
 @Composable
@@ -251,9 +281,9 @@ fun Recup_request(
 
 @Composable
 fun Recup_friend(
-    friend : String,
-    pps : Map<String, String>,
-    elos : Map<String, Int>,
+    friend: String,
+    pps: MutableState<Map<String, String>>,
+    elos: MutableState<Map<String, Int>>,
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onRefresh: () -> Unit
@@ -274,10 +304,10 @@ fun Recup_friend(
         ){
             Log.i("TAG", "Verif_images: $friend")
             Log.i("TAG", "Verif_images: $pps")
-            Log.i("TAG", "Verif_images: ${pps[friend]}")
-            if(pps[friend] != null && pps[friend] != ""){
-                val resId = remember(pps[friend]) {
-                    context.resources.getIdentifier(pps[friend], "drawable", context.packageName)
+            Log.i("TAG", "Verif_images: ${pps.value[friend]}")
+            if(pps.value[friend] != null && pps.value[friend] != ""){
+                val resId = remember(pps.value[friend]) {
+                    context.resources.getIdentifier(pps.value[friend], "drawable", context.packageName)
                 }
                 Image(
                     painter = painterResource(id = resId),
@@ -297,7 +327,7 @@ fun Recup_friend(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Custom_card(elos[friend].toString())
+                Custom_card(elos.value[friend].toString())
                 IconButton(
                     onClick = {
                         remove_friend(auth, db, friend, onRefresh)

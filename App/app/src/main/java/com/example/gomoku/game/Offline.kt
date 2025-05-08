@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_row
+import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 
@@ -55,7 +56,7 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Text("Mode : Offline")
+            ModeText("Offline")
 
             OutlinedTextField(
                 value = player1,

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,10 +33,12 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_card
@@ -72,6 +77,7 @@ import java.util.Locale
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?) {
     //TODO : Meilleur visuel ?
     val context = LocalContext.current
+    var loading by remember { mutableStateOf(true) }
 
     var erreur by remember { mutableStateOf("") }
 
@@ -107,9 +113,11 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                 pseudo = res.documents.first().data!!["pseudo"].toString()
                 pp = res.documents.first().data!!["profile_pic"].toString()
                 elo = res.documents.first().data!!["elo"].toString().toInt()
+                loading = false
             }
             .addOnFailureListener {
                 Log.i("TAG", "Profile: Error")
+                loading = false
             }
 
         db.collection("users").document(auth.currentUser!!.uid).get()
@@ -143,8 +151,10 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
                     }
                     match_history[formattedDate] = string_elo
                 }
+                loading = false
             }.addOnFailureListener {
                 Log.i("TAG", "Profile: Error getting match history")
+                loading = false
             }
     }
 
@@ -163,72 +173,91 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             }
 
             if (isMe) {
-                Box {
+                Box(contentAlignment = Alignment.Center) {
                     IconButton(
                         onClick = { expanded = true },
                         modifier = Modifier.padding(4.dp).size(72.dp)
                     ) {
-                        if (resId != 0) {
-                            Image(
-                                painter = painterResource(id = resId),
-                                contentDescription = "Profile picture",
-                                modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                        if (loading) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.secondary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Filled.AccountCircle,
-                                contentDescription = "Account",
-                                modifier = Modifier.padding(4.dp).size(72.dp)
-                            )
+                        }else {
+                            if (resId != 0) {
+                                Image(
+                                    painter = painterResource(id = resId),
+                                    contentDescription = "Profile picture",
+                                    modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.AccountCircle,
+                                    contentDescription = "Account",
+                                    modifier = Modifier.padding(4.dp).size(72.dp)
+                                )
+                            }
                         }
                     }
 
                     DropdownMenu(
+                        modifier = Modifier.fillMaxWidth(),
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        drawableOptions.forEach { imageName ->
-                            val option = context.resources.getIdentifier(
-                                imageName,
-                                "drawable",
-                                context.packageName
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    pp = imageName
-                                    expanded = false
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            drawableOptions.forEach { imageName ->
+                                val option = context.resources.getIdentifier(
+                                    imageName, "drawable", context.packageName
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .clickable {
+                                            pp = imageName
+                                            expanded = false
 
-                                    val user = auth.currentUser!!
-                                    db.collection("users").document(user.uid).update("profile_pic", imageName)
-                                        .addOnSuccessListener { Log.i("TAG", "Profile: Profile picture updated") }
-                                        .addOnFailureListener { Log.i("TAG", "Profile: Error updating profile picture") }
-                                },
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Image(
-                                            painter = painterResource(id = option),
-                                            contentDescription = "Profile picture",
-                                            modifier = Modifier.size(32.dp).clip(CircleShape)
-                                        )
-                                    }
+                                            val user = auth.currentUser!!
+                                            db.collection("users").document(user.uid)
+                                                .update("profile_pic", imageName)
+                                                .addOnSuccessListener { Log.i("TAG", "Profile: Profile picture updated") }
+                                                .addOnFailureListener { Log.i("TAG", "Profile: Error updating profile picture") }
+                                        }
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = option),
+                                        contentDescription = "Profile picture",
+                                        modifier = Modifier.size(48.dp).clip(CircleShape)
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
             } else {
-                if (resId != 0) {
-                    Image(
-                        painter = painterResource(id = resId),
-                        contentDescription = "Profile picture",
-                        modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                if (loading) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Account",
-                        modifier = Modifier.padding(4.dp).size(72.dp)
-                    )
+                }else {
+                    if (resId != 0) {
+                        Image(
+                            painter = painterResource(id = resId),
+                            contentDescription = "Profile picture",
+                            modifier = Modifier.clip(CircleShape).padding(4.dp).size(72.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = "Account",
+                            modifier = Modifier.padding(4.dp).size(72.dp)
+                        )
+                    }
                 }
             }
 
@@ -256,17 +285,41 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = stringResource(R.string.pseudo))
-            Custom_card(pseudo)
-            Text(text = "Elo")
-            Custom_card(elo.toString())
+            Text(
+                text = stringResource(R.string.pseudo),
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(4.dp)
+            )
+            if(loading){
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }else{
+                Custom_card(pseudo)
+            }
+            Text(
+                text = "Elo",
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(4.dp)
+            )
+            if(loading){
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }else{
+                Custom_card(elo.toString())
+            }
 
             if (!isMe && !isFriend) {
                 IconButton(
@@ -326,29 +379,41 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Historique des parties")
+        Text(
+            text = "Historique des parties",
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(4.dp)
+        )
 
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(match_history.toList()) { (date, elo) ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Row(
+        if(loading){
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }else{
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(match_history.toList()) { (date, elo) ->
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(vertical = 4.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Text(text = date)
-                        Text(
-                            text = elo,
-                            color = if (elo.startsWith("+")) Color.Green else Color.Red
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = date)
+                            Text(
+                                text = elo,
+                                color = if (elo.startsWith("+")) Color.Green else Color.Red
+                            )
+                        }
                     }
                 }
             }

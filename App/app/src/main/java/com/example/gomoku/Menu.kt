@@ -1,7 +1,9 @@
 package com.example.gomoku
 
+import android.content.ClipData.Item
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,50 +15,70 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
 
     var pp by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
-    if(auth.currentUser != null){
-        Log.i("TAG", "Current user: ${auth.currentUser!!.uid}")
-        db.collection("users").document(auth.currentUser!!.uid).get()
-            .addOnSuccessListener { res ->
-                Log.i("TAG", "Profile: ${res.data}")
-                pp = res.data!!["profile_pic"].toString()
-                elo = res.data!!["elo"].toString().toInt()
-            }
-            .addOnFailureListener {
-                Log.i("TAG", "Profile: Error")
-            }
-    }
 
+    LaunchedEffect(auth.currentUser) {
+        if (auth.currentUser != null) {
+            Log.i("TAG", "Current user: ${auth.currentUser!!.uid}")
+            db.collection("users").document(auth.currentUser!!.uid).get()
+                .addOnSuccessListener { res ->
+                    Log.i("TAG", "Profile: ${res.data}")
+                    pp = res.data!!["profile_pic"].toString()
+                    elo = res.data!!["elo"].toString().toInt()
+                    loading = false
+                }
+                .addOnFailureListener {
+                    Log.i("TAG", "Profile: Error")
+                    loading = false
+                }
+        } else loading = false
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -86,7 +108,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                     modifier = Modifier.padding(4.dp),
                     enabled = auth.currentUser != null
                 ) {
-                    Text(text = "Elo : $elo")
+                    if(loading) Chargement()
+                    else Text(text = "Elo : $elo")
                 }
 
                 Box{
@@ -94,21 +117,32 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                         onClick = { expanded = true },
                         modifier = Modifier.padding(4.dp).size(72.dp)
                     ) {
-                        if(pp != "" && auth.currentUser != null){
-                            val resId = remember(pp) {
-                                context.resources.getIdentifier(pp, "drawable", context.packageName)
+                        if(loading){
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.secondary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        }else {
+                            if (pp != "" && auth.currentUser != null) {
+                                val resId = remember(pp) {
+                                    context.resources.getIdentifier(
+                                        pp,
+                                        "drawable",
+                                        context.packageName
+                                    )
+                                }
+                                Image(
+                                    painter = painterResource(id = resId),
+                                    contentDescription = "Profile picture",
+                                    modifier = Modifier.size(72.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.AccountCircle,
+                                    contentDescription = "Account",
+                                    modifier = Modifier.size(72.dp)
+                                )
                             }
-                            Image(
-                                painter = painterResource(id = resId),
-                                contentDescription = "Profile picture",
-                                modifier = Modifier.size(72.dp)
-                            )
-                        }else{
-                            Icon(
-                                imageVector = Icons.Filled.AccountCircle,
-                                contentDescription = "Account",
-                                modifier = Modifier.size(72.dp)
-                            )
                         }
                     }
 
@@ -189,6 +223,48 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.play_asynchronus))
+            }
+
+            Spacer(modifier = Modifier.height(64.dp))
+
+            TextButton(
+                onClick = { showDialog = true },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(text = stringResource(id = R.string.about))
+            }
+
+            if(showDialog){
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text(text = stringResource(id = R.string.app_name)) },
+                    text = {
+                        Column{
+                            Text(text = "© 2025 Reynier Théo - Viguier Killian")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                buildAnnotatedString {
+                                    append("Icon credit : ")
+                                    withLink(
+                                        LinkAnnotation.Url(
+                                            "https://www.flaticon.com/fr/auteurs/anastassiya-motokhova",
+                                            TextLinkStyles(style = SpanStyle(color = Color.Blue))
+                                        )
+                                    ){
+                                        append("Anastassiya Motokhova")
+                                    }
+                                }
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = { showDialog = false }
+                        ) {
+                            Text(text = "Cool !")
+                        }
+                    }
+                )
             }
         }
     }

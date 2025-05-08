@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
+import com.example.gomoku.Chargement
 import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 import com.google.firebase.firestore.FirebaseFirestore
@@ -39,6 +40,7 @@ import com.google.firebase.firestore.Query
 @Composable
 fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: FirebaseFirestore){
     var leaderboard by remember { mutableStateOf(listOf<User>()) }
+    var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         db.collection("users").orderBy("elo", Query.Direction.DESCENDING).get()
@@ -52,9 +54,11 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
                     User(email, pseudo, elo.toString().toInt(), friends, requests)
                 }
                 leaderboard = users
+                loading = false
             }
             .addOnFailureListener {
                 Log.i("TAG", "Leaderboard: Error")
+                loading = false
             }
     }
 
@@ -70,45 +74,47 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
             modifier = Modifier.padding(8.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = true,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            itemsIndexed(leaderboard){ index,user ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .border(1.dp, Color.LightGray, shape = RoundedCornerShape(12.dp))
-                        .background(
-                            if (index == 0) Color(0xFFFFD700) else Color.White,
-                            shape = RoundedCornerShape(12.dp)
+        if(loading) Chargement()
+        else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = true,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                itemsIndexed(leaderboard) { index, user ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.LightGray, shape = RoundedCornerShape(12.dp))
+                            .background(
+                                if (index == 0) Color(0xFFFFD700) else Color.White,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${index + 1}",
+                            fontSize = 20.sp,
+                            color = if (index == 0) Color.Black else Color.Gray,
+                            modifier = Modifier.width(40.dp)
                         )
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(
-                        text = "${index+1}",
-                        fontSize = 20.sp,
-                        color = if (index == 0) Color.Black else Color.Gray,
-                        modifier = Modifier.width(40.dp)
-                    )
 
-                    Text(
-                        text = user.pseudo,
-                        fontSize = 20.sp,
-                        modifier = Modifier.weight(1f).clickable {
-                            navController.navigate("${Screens.Profile.name}/${user.pseudo}")
-                        }
-                    )
+                        Text(
+                            text = user.pseudo,
+                            fontSize = 20.sp,
+                            modifier = Modifier.weight(1f).clickable {
+                                navController.navigate("${Screens.Profile.name}/${user.pseudo}")
+                            }
+                        )
 
-                    Text(
-                        text = "${user.elo}",
-                        fontSize = 18.sp,
-                        color = Color(0xFF2E7D32)
-                    )
+                        Text(
+                            text = "${user.elo}",
+                            fontSize = 18.sp,
+                            color = Color(0xFF2E7D32)
+                        )
+                    }
                 }
             }
         }
