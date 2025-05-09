@@ -1,11 +1,8 @@
 package com.example.gomoku.user
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,11 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
@@ -35,7 +29,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -75,7 +68,6 @@ import java.util.Locale
 @SuppressLint("DiscouragedApi")
 @Composable
 fun Profile(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, p: String?) {
-    //TODO : Meilleur visuel ?
     val context = LocalContext.current
     var loading by remember { mutableStateOf(true) }
 
@@ -92,7 +84,6 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
     // timestamp et +/- elo_change
     var match_history = remember { mutableStateMapOf<String, String>() }
 
-    val scrollState = rememberScrollState()
     var expanded by remember { mutableStateOf(false) }
     val drawableOptions = listOf(
         "chat",

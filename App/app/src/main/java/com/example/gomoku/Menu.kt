@@ -1,9 +1,8 @@
 package com.example.gomoku
 
-import android.content.ClipData.Item
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.AlertDialog
@@ -23,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +49,7 @@ import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("DiscouragedApi")
 @Composable
 fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
     val context = LocalContext.current
@@ -125,11 +122,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                         }else {
                             if (pp != "" && auth.currentUser != null) {
                                 val resId = remember(pp) {
-                                    context.resources.getIdentifier(
-                                        pp,
-                                        "drawable",
-                                        context.packageName
-                                    )
+                                    context.resources.getIdentifier(pp,"drawable",context.packageName)
                                 }
                                 Image(
                                     painter = painterResource(id = resId),
@@ -159,7 +152,6 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                                     recup_moi(auth, db){ pseudo ->
                                         navController.navigate("${Screens.Profile.name}/$pseudo")
                                     }
-
                                 }
                             )
                             DropdownMenuItem(

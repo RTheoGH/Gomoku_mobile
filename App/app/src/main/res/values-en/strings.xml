@@ -63,4 +63,6 @@
     <string name="leave_message">left the game</string>
     <string name="stay">Stay</string>
     <string name="about">About</string>
+    <string name="ranked">Ranked</string>
+    <string name="players">Players</string>
 </resources>

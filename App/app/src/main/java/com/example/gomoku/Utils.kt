@@ -1,5 +1,6 @@
 package com.example.gomoku
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -20,10 +21,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -85,6 +91,37 @@ fun SecondaryText(text : String){
     )
 }
 
+@Composable
+fun switchWithIcon() : Boolean{
+    var checked by remember { mutableStateOf(false) }
+
+    Switch(
+        modifier = Modifier.padding(4.dp),
+        checked = checked,
+        onCheckedChange = { checked = it },
+        thumbContent = if (checked){
+            {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Checked",
+                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                )
+            }
+        } else {
+            null
+        }
+    )
+    return checked
+}
+
+@SuppressLint("DefaultLocale")
+fun formatSecondsToTime(seconds: Int): String {
+    val minutes = seconds / 60
+    val remainingSeconds = seconds % 60
+    return String.format("%02d:%02d", minutes, remainingSeconds)
+}
+
+@SuppressLint("DiscouragedApi")
 @Composable
 fun Custom_row(i : Int, timer : String, player : String, pp : String){
     val context = LocalContext.current
@@ -279,6 +316,7 @@ fun Recup_request(
     }
 }
 
+@SuppressLint("DiscouragedApi")
 @Composable
 fun Recup_friend(
     friend: String,

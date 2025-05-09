@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,10 +25,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -55,7 +60,9 @@ import com.example.gomoku.Custom_row
 import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.SecondaryText
+import com.example.gomoku.formatSecondsToTime
 import com.example.gomoku.nav.Screens
+import com.example.gomoku.switchWithIcon
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
@@ -64,6 +71,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import kotlin.math.abs
 
 @Composable
@@ -111,6 +119,8 @@ fun Online_create(
     val context = LocalContext.current
     var lobby_name by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var ranked by remember { mutableStateOf(false) }
+    var blitz by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -141,6 +151,16 @@ fun Online_create(
                 modifier = Modifier.padding(4.dp),
                 visualTransformation = PasswordVisualTransformation(),
             )
+
+            Row(verticalAlignment = Alignment.CenterVertically){
+                SecondaryText(stringResource(R.string.ranked))
+                ranked = switchWithIcon()
+                Log.i("TAG", "Ranked: $ranked")
+                Spacer(modifier = Modifier.width(16.dp))
+                SecondaryText("Blitz")
+                blitz = switchWithIcon()
+                Log.i("TAG", "Blitz: $blitz")
+            }
 
             if (errorMessage != null) {
                 Text(
@@ -177,17 +197,19 @@ fun Online_create(
                                 val player1Data = mapOf(
                                     "uid" to uid,
                                     "pseudo" to uid_name,
-                                    "profile_pic" to pp
+                                    "profile_pic" to pp,
+                                    "timer" to 300
                                 )
 
                                 val lobbyData = mapOf(
                                     "host" to uid_name,
                                     "password" to password.trim(),
-                                    /*TODO : son uid et son nom*/
                                     "player1" to player1Data,
                                     "player2" to "",
                                     "winner" to "",
                                     "status" to "waiting",
+                                    "ranked" to ranked,
+                                    "blitz" to blitz,
                                     "created_at" to System.currentTimeMillis(),
                                     "board" to board,
                                     "turn" to 0,
@@ -303,7 +325,8 @@ fun Online_join(
                                         val player2Data = mapOf(
                                             "uid" to uid,
                                             "pseudo" to uid_name,
-                                            "profile_pic" to pp
+                                            "profile_pic" to pp,
+                                            "timer" to 10
                                         )
 
                                         lobbyRef.child("player2").setValue(player2Data)
@@ -345,6 +368,8 @@ fun Online_lobby(
     var player2 by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("waiting") }
+    var ranked by remember { mutableStateOf(false) }
+    var blitz by remember { mutableStateOf(false) }
     var currentUidName by remember { mutableStateOf("") }
 
     val isHost by derivedStateOf { player1 == currentUidName }
@@ -357,6 +382,8 @@ fun Online_lobby(
             player2 = snapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
             password = snapshot.child("password").getValue(String::class.java) ?: ""
             status = snapshot.child("status").getValue(String::class.java) ?: "waiting"
+            ranked = snapshot.child("ranked").getValue(Boolean::class.java) ?: false
+            blitz = snapshot.child("blitz").getValue(Boolean::class.java) ?: false
 
             if(status == "started"){
                 navController.navigate("${Screens.Online_game.name}/$lobbyId")
@@ -409,36 +436,84 @@ fun Online_lobby(
 
     Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)) {
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(96.dp))
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             ModeText("Online")
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SecondaryText(stringResource(R.string.room))
-            Custom_card(lobbyId)
-
-            SecondaryText(stringResource(R.string.mdp))
-            Custom_card(password)
-
-            SecondaryText("Status")
-            Custom_card(status)
 
             Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
+            Spacer(modifier = Modifier.height(8.dp))
 
-            SecondaryText(stringResource(R.string.player1))
-            Custom_card(player1)
-
-            SecondaryText(stringResource(R.string.player2))
-            if(player2.isNotEmpty()){
-                Custom_card(player2)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SecondaryText(stringResource(R.string.room))
+                SecondaryText(stringResource(R.string.ranked) + "/Blitz")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Custom_card(lobbyId)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (ranked) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                        contentDescription = "Ranked"
+                    )
+                    SecondaryText("/")
+                    Icon(
+                        imageVector = if (blitz) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                        contentDescription = "Blitz"
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                SecondaryText(stringResource(R.string.mdp))
+                SecondaryText("Status")
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Custom_card(password)
+                Custom_card(status)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SecondaryText(stringResource(R.string.players))
+
+            if(player2.isEmpty()){
+                Custom_card(player1)
+            }else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(0.4f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Custom_card(player1)
+                    Custom_card(player2)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (errorMessage != null) {
                 Text(
@@ -449,7 +524,7 @@ fun Online_lobby(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(0.45f),
+                modifier = Modifier.fillMaxWidth(0.55f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
@@ -507,9 +582,14 @@ fun Online_game(
     var player1 by remember { mutableStateOf("") }
     var player1uid by remember { mutableStateOf("") }
     var player1pp by remember { mutableStateOf("") }
+    var player1timer by remember { mutableIntStateOf(300) }
     var player2 by remember { mutableStateOf("") }
     var player2uid by remember { mutableStateOf("") }
     var player2pp by remember { mutableStateOf("") }
+    var player2timer by remember { mutableIntStateOf(300) }
+
+    var ranked by remember { mutableStateOf(false) }
+    var blitz by remember { mutableStateOf(false) }
 
     var winner by remember { mutableStateOf("") }
 
@@ -540,9 +620,14 @@ fun Online_game(
             player1 = snapshot.child("player1").child("pseudo").getValue(String::class.java) ?: ""
             player1uid = snapshot.child("player1").child("uid").getValue(String::class.java) ?: ""
             player1pp = snapshot.child("player1").child("profile_pic").getValue(String::class.java) ?: ""
+            player1timer = snapshot.child("player1").child("timer").getValue(Int::class.java) ?: 300
             player2 = snapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
             player2uid = snapshot.child("player2").child("uid").getValue(String::class.java) ?: ""
             player2pp = snapshot.child("player2").child("profile_pic").getValue(String::class.java) ?: ""
+            player2timer = snapshot.child("player2").child("timer").getValue(Int::class.java) ?: 300
+
+            ranked = snapshot.child("ranked").getValue(Boolean::class.java) ?: false
+            blitz = snapshot.child("blitz").getValue(Boolean::class.java) ?: false
 
             val boardSnapshot = snapshot.child("board")
             val newBoard = MutableList(15) { MutableList(15) { GomokuCell(0, 0, CellState.EMPTY) } }
@@ -556,67 +641,89 @@ fun Online_game(
             }
             board = newBoard
             playerTurn = snapshot.child("turn").getValue(Int::class.java) ?: 0
+
             val turnHistorySnapshot = snapshot.child("turn_history")
             turn_history.clear()
             for (i in 0 until turnHistorySnapshot.childrenCount.toInt()) {
                 turn_history.add(turnHistorySnapshot.child(i.toString()).value.toString())
             }
-            isFinished = snapshot.child("status").getValue(String::class.java) == "finished"
 
+            isFinished = snapshot.child("status").getValue(String::class.java) == "finished"
             winner = snapshot.child("winner").getValue(String::class.java) ?: ""
-            if(winner != "" && isFinished && !transactionDone){
+
+            if(winner != "" && isFinished && !transactionDone) {
                 showDialogWin = true
                 transactionDone = true
 
                 val currentUid = auth.currentUser!!.uid
                 val isWinner = currentUid == player1uid && winner == player1 || currentUid == player2uid && winner == player2
 
-                val myRef = db.collection("users").document(currentUid)
-                var eloChange = 0
+                if (ranked) {
+                    val myRef = db.collection("users").document(currentUid)
+                    var eloChange = 0
 
-                db.runTransaction { transaction ->
+                    db.runTransaction { transaction ->
 
-                    val snapshotT = transaction.get(myRef)
-                    val myElo = snapshotT.getLong("elo") ?: 0
+                        val snapshotT = transaction.get(myRef)
+                        val myElo = snapshotT.getLong("elo") ?: 0
 
-                    val k = 32
+                        val k = 32
 
-                    val expectedScore = if(isWinner) 1.0 else 0.0
-                    val opponentUid = if (currentUid == player1uid) player2uid else player1uid
-                    val opponentRef = db.collection("users").document(opponentUid)
-                    val opponentSnapshot = transaction.get(opponentRef)
-                    val opponentElo = opponentSnapshot.getLong("elo") ?: 0
+                        val expectedScore = if (isWinner) 1.0 else 0.0
+                        val opponentUid = if (currentUid == player1uid) player2uid else player1uid
+                        val opponentRef = db.collection("users").document(opponentUid)
+                        val opponentSnapshot = transaction.get(opponentRef)
+                        val opponentElo = opponentSnapshot.getLong("elo") ?: 0
 
-                    val score = 1.0 / (1.0 + Math.pow(10.0, (opponentElo - myElo).toDouble() / 400.0))
-                    eloChange = (k * (expectedScore - score)).toInt()
+                        val score = 1.0 / (1.0 + Math.pow(10.0, (opponentElo - myElo).toDouble() / 400.0))
+                        eloChange = (k * (expectedScore - score)).toInt()
 
-                    Log.i("TAG", "Elo change: $eloChange")
+                        Log.i("TAG", "Elo change: $eloChange")
 
-                    transaction.update(myRef, "elo", myElo + eloChange)
+                        transaction.update(myRef, "elo", myElo + eloChange)
 
-                    null
-                }.addOnSuccessListener {
-                    Log.i("TAG", "Elo updated")
+                        null
+                    }.addOnSuccessListener {
+                        Log.i("TAG", "Elo updated")
 
+                        val matchData = mapOf(
+                            "player1" to player1,
+                            "player2" to player2,
+                            "players" to listOf(player1, player2),
+                            "winner" to winner,
+                            "elo_change" to abs(eloChange),
+                            "timestamp" to FieldValue.serverTimestamp()
+                        )
+                        db.collection("matches").add(matchData)
+
+                        if (isWinner) {
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                lobbyRef.removeValue()
+                                    .addOnSuccessListener { Log.i("TAG", "Partie supprimée") }
+                                    .addOnFailureListener { Log.i("TAG", "Partie non supprimée") }
+                            }, 10000)
+                        }
+
+                    }.addOnFailureListener { Log.i("TAG", "Elo update failed") }
+                }else{
                     val matchData = mapOf(
                         "player1" to player1,
                         "player2" to player2,
                         "players" to listOf(player1, player2),
                         "winner" to winner,
-                        "elo_change" to abs(eloChange),
+                        "elo_change" to 0,
                         "timestamp" to FieldValue.serverTimestamp()
                     )
                     db.collection("matches").add(matchData)
 
-                    if(isWinner) {
+                    if (isWinner) {
                         Handler(Looper.getMainLooper()).postDelayed({
                             lobbyRef.removeValue()
                                 .addOnSuccessListener { Log.i("TAG", "Partie supprimée") }
                                 .addOnFailureListener { Log.i("TAG", "Partie non supprimée") }
                         }, 10000)
                     }
-
-                }.addOnFailureListener { Log.i("TAG", "Elo update failed") }
+                }
             }
         }
         override fun onCancelled(error: DatabaseError) {
@@ -653,6 +760,36 @@ fun Online_game(
         }
     }
 
+    if(blitz) {
+        val currentUid = auth.currentUser!!.uid
+        val isMyTurn = (playerTurn == 0 && currentUid == player1uid) || (playerTurn == 1 && currentUid == player2uid)
+
+        LaunchedEffect(isMyTurn, isFinished) {
+            while (isMyTurn && !isFinished) {
+                delay(1000)
+                if (playerTurn == 0) {
+                    player1timer--
+                    lobbyRef.child("player1").child("timer").setValue(player1timer)
+                    if (player1timer <= 0) {
+                        showDialogWin = true
+                        winner = player2
+                        lobbyRef.child("status").setValue("finished")
+                        lobbyRef.child("winner").setValue(winner)
+                    }
+                } else {
+                    player2timer--
+                    lobbyRef.child("player2").child("timer").setValue(player2timer)
+                    if (player2timer <= 0) {
+                        showDialogWin = true
+                        winner = player1
+                        lobbyRef.child("status").setValue("finished")
+                        lobbyRef.child("winner").setValue(winner)
+                    }
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -676,7 +813,8 @@ fun Online_game(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Custom_row(1,"",player2,player2pp)
+            if(blitz) Custom_row(1,formatSecondsToTime(player2timer),player2,player2pp)
+            else Custom_row(1,"",player2,player2pp)
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
             Board(
@@ -702,7 +840,6 @@ fun Online_game(
                         lobbyRef.child("turn_history").setValue(turn_history)
 
                         if (check_win(board, x, y, 15)) {
-                            isFinished = true
                             showDialogWin = true
                             winner = if(playerTurn == 0) player1 else player2
                             lobbyRef.child("status").setValue("finished")
@@ -717,7 +854,8 @@ fun Online_game(
             )
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
-            Custom_row(2,"",player1,player1pp)
+            if(blitz) Custom_row(2,formatSecondsToTime(player1timer),player1,player1pp)
+            else Custom_row(2,"",player1,player1pp)
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -734,7 +872,13 @@ fun Online_game(
                 }
                 if (isFinished){
                     item {
-                        val player = if(playerTurn == 0) player1 else player2
+                        val player = if(blitz){
+                            if(player1timer <= 0) player2
+                            else if(player2timer <= 0) player1
+                            else winner
+                        }else {
+                            if (playerTurn == 0) player1 else player2
+                        }
                         Text(modifier = Modifier.padding(horizontal = 5.dp), text = player+" "+ stringResource(R.string.win))
                     }
                 }

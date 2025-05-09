@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,7 +92,6 @@ fun Sign_in(pad : PaddingValues, navController: NavHostController, auth: Firebas
 
             Button(
                 onClick = {
-                    //TODO
                     errorMessage = null
                     if(pseudo.isEmpty() || password.isEmpty()){
                         errorMessage = R.string.error_fields.toString()
@@ -154,18 +152,11 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            IconButton(
-                onClick = {
-                    //TODO ?
-                },
+            Icon(
+                imageVector = Icons.Filled.AccountCircle,
+                contentDescription = "Account",
                 modifier = Modifier.padding(4.dp).size(72.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.AccountCircle,
-                    contentDescription = "Account",
-                    modifier = Modifier.padding(4.dp).size(72.dp)
-                )
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -263,10 +254,10 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                     }
                                 }
                                 .addOnFailureListener { e ->
-                                    if (e is FirebaseAuthUserCollisionException) {
-                                        errorMessage = context.getString(R.string.email_taken)
+                                    errorMessage = if (e is FirebaseAuthUserCollisionException) {
+                                        context.getString(R.string.email_taken)
                                     } else {
-                                        errorMessage = context.getString(R.string.error_create_account)
+                                        context.getString(R.string.error_create_account)
                                     }
                                 }
                             }

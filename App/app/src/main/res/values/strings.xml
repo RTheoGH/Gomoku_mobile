@@ -62,4 +62,6 @@
     <string name="leave_message">a quitté la partie.</string>
     <string name="stay">Rester</string>
     <string name="about">A propos</string>
+    <string name="ranked">Classée</string>
+    <string name="players">Joueurs</string>
 </resources>
