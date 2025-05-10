@@ -64,4 +64,10 @@
     <string name="about">A propos</string>
     <string name="ranked">Classée</string>
     <string name="players">Joueurs</string>
+    <string name="cancel">Annuler</string>
+    <string name="start">Rechercher</string>
+    <string name="search20">Recherche d\'un adversaire...</string>
+    <string name="search40">Recherche approfondi...</string>
+    <string name="search60">Recherche loooinnn...</string>
+    <string name="searchmore">C\'est long la...</string>
 </resources>

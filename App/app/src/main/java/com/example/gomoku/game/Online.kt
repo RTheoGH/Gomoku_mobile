@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
+import com.example.gomoku.Chargement
 import com.example.gomoku.Custom_card
 import com.example.gomoku.Custom_row
 import com.example.gomoku.ModeText
@@ -72,6 +73,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.tasks.await
 import kotlin.math.abs
 
 @Composable
@@ -87,12 +89,25 @@ fun Online(pad : PaddingValues, navController: NavHostController){
             verticalArrangement = Arrangement.Center
         ){
             ModeText("Online")
+
             Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    navController.navigate(Screens.Online_matchmaking.name)
+                },
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+            ){
+                Text(text = "Matchmaking")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     navController.navigate(Screens.Online_create.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier.padding(2.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(R.string.online_create))
             }
@@ -100,10 +115,188 @@ fun Online(pad : PaddingValues, navController: NavHostController){
                 onClick = {
                     navController.navigate(Screens.Online_join.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier.padding(2.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(R.string.online_join))
             }
+        }
+    }
+}
+
+@Composable
+fun Online_matchmaking(
+    pad : PaddingValues,
+    navController: NavHostController,
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    rdb: FirebaseDatabase
+) {
+    var isLoading by remember { mutableStateOf(false) }
+    var isSearching by remember { mutableStateOf(false) }
+    var tempsEcoule by remember { mutableStateOf(0) }
+
+    var ranked by remember { mutableStateOf(false) }
+    var blitz by remember { mutableStateOf(false) }
+
+    var username by remember { mutableStateOf("") }
+    var elo by remember { mutableStateOf(0) }
+    var profile_pic by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit){
+        val currentUid = auth.currentUser!!.uid
+        db.collection("users").document(currentUid).get()
+            .addOnSuccessListener {
+                username = it.get("pseudo").toString()
+                elo = it.get("elo").toString().toInt()
+                profile_pic = it.get("profile_pic").toString()
+            }
+            .addOnFailureListener {
+                Log.i("TAG", "Online_matchmaking: Error getting user data")
+            }
+    }
+
+    DisposableEffect(Unit){
+        onDispose {
+            val currentUid = auth.currentUser!!.uid
+            rdb.getReference("matchmaking").child(currentUid).removeValue()
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)){
+        Back(navController)
+
+        Spacer(modifier = Modifier.height(96.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            ModeText("Online")
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SecondaryText("Matchmaking")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.9f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SecondaryText(stringResource(R.string.pseudo))
+                SecondaryText("Elo")
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.9f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Custom_card(username)
+                Custom_card(elo.toString())
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically){
+                SecondaryText(stringResource(R.string.ranked))
+                ranked = switchWithIcon()
+                Log.i("TAG", "Ranked: $ranked")
+                Spacer(modifier = Modifier.width(16.dp))
+                SecondaryText("Blitz")
+                blitz = switchWithIcon()
+                Log.i("TAG", "Blitz: $blitz")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = {
+                        isSearching = false
+                        isLoading = false
+                        val currentUid = auth.currentUser!!.uid
+                        rdb.getReference("matchmaking").child(currentUid).removeValue()
+                    },
+                    enabled = isSearching
+                ){
+                    Text(text = stringResource(R.string.cancel))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = {
+                        isLoading = true
+                        isSearching = true
+                    },
+                    enabled = !isSearching
+                ) {
+                    Text(text = stringResource(R.string.start))
+                }
+            }
+
+            if(isLoading){
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Chargement()
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Custom_card(formatSecondsToTime(tempsEcoule))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if(tempsEcoule < 20) stringResource(R.string.search20)
+                        else if (tempsEcoule < 40) stringResource(R.string.search40)
+                        else if (tempsEcoule < 60) stringResource(R.string.search60)
+                        else stringResource(R.string.searchmore)
+                    )
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(isSearching) {
+        if(!isSearching){
+            tempsEcoule = 0
+            return@LaunchedEffect
+        }
+
+        val currentUid = auth.currentUser!!.uid
+
+        while (isSearching) {
+            delay(1000)
+
+            val matchedLobby = rdb.getReference("matchmaking").child(currentUid)
+                .child("matched_lobby_id").get().await()?.getValue(String::class.java)
+
+            if(matchedLobby != null){
+                rdb.getReference("matchmaking").child(currentUid).removeValue()
+                isSearching = false
+                isLoading = false
+                navController.navigate("${Screens.Online_game.name}/$matchedLobby")
+                break
+            }
+
+            val found = searchMatch(
+                currentUid, username, elo, profile_pic,
+                ranked, blitz,
+                tempsEcoule,
+                rdb, navController
+            )
+            if (found) {
+                isSearching = false
+                isLoading = false
+                break
+            }
+            tempsEcoule += 1
         }
     }
 }
@@ -326,7 +519,7 @@ fun Online_join(
                                             "uid" to uid,
                                             "pseudo" to uid_name,
                                             "profile_pic" to pp,
-                                            "timer" to 10
+                                            "timer" to 300
                                         )
 
                                         lobbyRef.child("player2").setValue(player2Data)

@@ -25,6 +25,7 @@ import com.example.gomoku.game.Online_create
 import com.example.gomoku.game.Online_game
 import com.example.gomoku.game.Online_join
 import com.example.gomoku.game.Online_lobby
+import com.example.gomoku.game.Online_matchmaking
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -79,11 +80,14 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         composable(route = Screens.Online.name) {
             Online(pad, navController)
         }
+        composable(route = Screens.Online_matchmaking.name) {
+            Online_matchmaking(pad, navController, auth, db, rdb)
+        }
         composable(route = Screens.Online_create.name) {
-            Online_create(pad, navController,auth,db,rdb)
+            Online_create(pad, navController, auth, db, rdb)
         }
         composable(route = Screens.Online_join.name) {
-            Online_join(pad, navController,auth,db,rdb)
+            Online_join(pad, navController, auth, db, rdb)
         }
         composable(
             route = "${Screens.Online_lobby.name}/{lobbyId}",

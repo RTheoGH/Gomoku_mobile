@@ -65,4 +65,10 @@
     <string name="about">About</string>
     <string name="ranked">Ranked</string>
     <string name="players">Players</string>
+    <string name="cancel">Cancel</string>
+    <string name="start">Start</string>
+    <string name="search60">" Looking far further..."</string>
+    <string name="searchmore">Is anybody here ..?</string>
+    <string name="search20">Looking for an opponent...</string>
+    <string name="search40">Looking further...</string>
 </resources>

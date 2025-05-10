@@ -11,6 +11,7 @@ enum class Screens {
     Offline_lobby,
     Offline_game,
     Online,
+    Online_matchmaking,
     Online_create,
     Online_join,
     Online_lobby,

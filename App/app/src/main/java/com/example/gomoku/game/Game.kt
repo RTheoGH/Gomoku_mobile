@@ -3,8 +3,8 @@ package com.example.gomoku.game
 import com.example.gomoku.user.User
 
 enum class GameMode{
-    OFFLINE,
-    ONLINE,
+    PUBLIC,
+    PRIVATE,
     ASYNCHRONOUS
 }
 
