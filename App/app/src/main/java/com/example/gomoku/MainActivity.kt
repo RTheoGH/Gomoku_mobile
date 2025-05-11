@@ -2,6 +2,7 @@ package com.example.gomoku
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -24,6 +25,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.database
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.messaging
 
 
 class MainActivity : ComponentActivity() {
@@ -38,13 +40,7 @@ class MainActivity : ComponentActivity() {
         db = Firebase.firestore
         rdb = FirebaseDatabase.getInstance("https://gomoku-76114-default-rtdb.europe-west1.firebasedatabase.app")
 
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                val uid = auth.currentUser?.uid
-                db.collection("users").document(uid!!).update("token", token)
-            }
-        }
+        startService(Intent(this, NotifService::class.java))
 
         enableEdgeToEdge()
         setContent {

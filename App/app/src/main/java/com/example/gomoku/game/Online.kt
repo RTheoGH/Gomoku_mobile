@@ -703,7 +703,7 @@ fun Online_lobby(
                     onClick = {
                         (context as? MainActivity)?.showNotification(
                             "Information",
-                            "Cette fonctionnalitée requiert Firebase Cloud Function (payant)"
+                            "Pas encore implémenté"
                         )
                     }
                 ) {

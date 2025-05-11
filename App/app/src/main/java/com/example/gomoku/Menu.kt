@@ -213,7 +213,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                     //navController.navigate(Screens.Asynchronus.name)
                     (context as? MainActivity)?.showNotification(
                         "Information",
-                        "Cette fonctionnalitée requiert Firebase Cloud Function (payant)"
+                        "Pas encore implémenté"
                     )
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
