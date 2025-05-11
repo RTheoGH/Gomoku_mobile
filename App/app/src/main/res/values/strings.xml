@@ -70,4 +70,6 @@
     <string name="search40">Recherche approfondi...</string>
     <string name="search60">Recherche loooinnn...</string>
     <string name="searchmore">C\'est long la...</string>
+    <string name="notifications_on">Permission accordée</string>
+    <string name="notifications_off">Permission refusée</string>
 </resources>

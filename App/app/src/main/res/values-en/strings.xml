@@ -71,4 +71,6 @@
     <string name="searchmore">Is anybody here ..?</string>
     <string name="search20">Looking for an opponent...</string>
     <string name="search40">Looking further...</string>
+    <string name="notifications_on">Permission granted</string>
+    <string name="notifications_off">Permission denied</string>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.AlertDialog
@@ -209,7 +210,11 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
             }
             Button(
                 onClick = {
-                    navController.navigate(Screens.Asynchronus.name)
+                    //navController.navigate(Screens.Asynchronus.name)
+                    (context as? MainActivity)?.showNotification(
+                        "Information",
+                        "Cette fonctionnalitée requiert Firebase Cloud Function (payant)"
+                    )
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
                 enabled = auth.currentUser != null
@@ -219,11 +224,24 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
 
             Spacer(modifier = Modifier.height(64.dp))
 
-            TextButton(
-                onClick = { showDialog = true },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(text = stringResource(id = R.string.about))
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ){
+                TextButton(
+                    onClick = { showDialog = true }
+                ) {
+                    Text(text = stringResource(id = R.string.about))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = {
+                        (context as? MainActivity)?.requestPermission()
+                    }
+                ){
+                    Text("Notifications")
+                }
             }
 
             if(showDialog){

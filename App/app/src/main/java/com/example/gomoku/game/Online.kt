@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.PersonAddAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import com.example.gomoku.Back
 import com.example.gomoku.Chargement
 import com.example.gomoku.Custom_card
 import com.example.gomoku.Custom_row
+import com.example.gomoku.MainActivity
 import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.SecondaryText
@@ -554,6 +556,7 @@ fun Online_lobby(
     rdb: FirebaseDatabase,
     lobbyId: String
 ){
+    val context = LocalContext.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
@@ -689,7 +692,27 @@ fun Online_lobby(
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).border(1.dp,color = MaterialTheme.colorScheme.primary)){}
             Spacer(modifier = Modifier.height(8.dp))
 
-            SecondaryText(stringResource(R.string.players))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SecondaryText(stringResource(R.string.players))
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        (context as? MainActivity)?.showNotification(
+                            "Information",
+                            "Cette fonctionnalitée requiert Firebase Cloud Function (payant)"
+                        )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PersonAddAlt,
+                        contentDescription = "Players"
+                    )
+                }
+            }
 
             if(player2.isEmpty()){
                 Custom_card(player1)
