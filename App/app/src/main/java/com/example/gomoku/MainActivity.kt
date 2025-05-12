@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GomokuTheme {
-                App(auth, db, rdb)
+                App(auth, db, rdb, intent)
             }
         }
     }

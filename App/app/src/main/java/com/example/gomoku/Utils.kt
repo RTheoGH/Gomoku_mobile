@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -491,4 +492,40 @@ fun remove_friend(
         .addOnFailureListener {
             Log.i("TAG", "Profile: Error getting current user")
         }
+}
+
+fun joinLobbyAndRemoveInvitation(inviter: String, lobbyId: String){
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val rdb = FirebaseDatabase.getInstance("https://gomoku-76114-default-rtdb.europe-west1.firebasedatabase.app")
+    val user = auth.currentUser!!.uid
+
+    db.collection("users").document(user).get().addOnSuccessListener { res ->
+        val pseudo = res.get("pseudo") as? String ?: return@addOnSuccessListener
+        val profilePic = res.get("profile_pic") as? String ?: return@addOnSuccessListener
+
+        val player2Data = mapOf(
+            "uid" to user,
+            "pseudo" to pseudo,
+            "profile_pic" to profilePic,
+            "timer" to 300
+        )
+
+        val lobbyRef = rdb.getReference("lobbies").child(lobbyId)
+        var currentJ2 = ""
+        lobbyRef.child("player2")
+            .child("pseudo").get().addOnSuccessListener {
+                currentJ2 = it.value.toString()
+            }
+
+        Log.i("TAG", "joinLobbyAndRemoveInvitation: $currentJ2")
+
+        if(currentJ2.isEmpty()){
+            lobbyRef.child("player2").setValue(player2Data)
+            db.collection("users").document(user)
+                .update("invitation", FieldValue.arrayRemove(mapOf("inviter" to inviter, "lobbyId" to lobbyId)))
+        }else{
+            return@addOnSuccessListener
+        }
+    }
 }

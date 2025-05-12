@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +60,6 @@ import com.example.gomoku.Back
 import com.example.gomoku.Chargement
 import com.example.gomoku.Custom_card
 import com.example.gomoku.Custom_row
-import com.example.gomoku.MainActivity
 import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.SecondaryText
@@ -422,7 +422,7 @@ fun Online_create(
                                 }
                             }.addOnFailureListener {
                                 errorMessage = context.getString(R.string.online_error_dataroom_get)
-11                            }
+                            }
                     }
                 },
                 modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
@@ -559,6 +559,7 @@ fun Online_lobby(
     val context = LocalContext.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var showFriendInviteDialog by remember { mutableStateOf(false) }
 
     var player1 by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
@@ -566,7 +567,9 @@ fun Online_lobby(
     var status by remember { mutableStateOf("waiting") }
     var ranked by remember { mutableStateOf(false) }
     var blitz by remember { mutableStateOf(false) }
+
     var currentUidName by remember { mutableStateOf("") }
+    var friends by remember { mutableStateOf(listOf<String>()) }
 
     val isHost by derivedStateOf { player1 == currentUidName }
     val canStart by derivedStateOf { player2.isNotEmpty() && isHost && status == "ready" }
@@ -610,6 +613,7 @@ fun Online_lobby(
         db.collection("users").document(currentUid).get()
             .addOnSuccessListener {
                 currentUidName = it.get("pseudo").toString()
+                friends = it.get("friends") as List<String>
             }
     }
 
@@ -627,6 +631,55 @@ fun Online_lobby(
                     Text(text = "OK")
                 }
             }
+        )
+    }
+
+    if(showFriendInviteDialog){
+        AlertDialog(
+            onDismissRequest = { showFriendInviteDialog = false },
+            title = { Text(text = "Invitation") },
+            text = {
+                Column{
+                    friends.forEach { f ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            Text(text = f)
+                            Button(
+                                onClick = {
+                                    val inviterName = currentUidName
+                                    val lobbyInvitation = mapOf(
+                                        "lobbyId" to lobbyId,
+                                        "inviter" to inviterName
+                                    )
+
+                                    Log.i("Invitation", "Online_lobby: $lobbyInvitation")
+
+                                    db.collection("users").whereEqualTo("pseudo", f).get()
+                                        .addOnSuccessListener { res ->
+                                            val target = res.documents.first().id
+
+                                            db.collection("users").document(target)
+                                                .update("invitation", FieldValue.arrayUnion(lobbyInvitation))
+
+                                            Toast.makeText(context, "Invitation envoyée à $f", Toast.LENGTH_SHORT).show()
+                                            showFriendInviteDialog = false
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "Erreur lors de l'envoi de l'invitation", Toast.LENGTH_SHORT).show()
+                                            showFriendInviteDialog = false
+                                        }
+                                }
+                            ){
+                                Text(text = "Invite")
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {}
         )
     }
 
@@ -698,27 +751,27 @@ fun Online_lobby(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SecondaryText(stringResource(R.string.players))
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        (context as? MainActivity)?.showNotification(
-                            "Information",
-                            "Pas encore implémenté"
+                if(isHost){
+                    IconButton(
+                        onClick = {
+                            showFriendInviteDialog = true
+                        },
+                        enabled = player2.isEmpty()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PersonAddAlt,
+                            contentDescription = "Players"
                         )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PersonAddAlt,
-                        contentDescription = "Players"
-                    )
                 }
+
             }
 
             if(player2.isEmpty()){
                 Custom_card(player1)
             }else {
                 Row(
-                    modifier = Modifier.fillMaxWidth(0.4f),
+                    modifier = Modifier.fillMaxWidth(0.6f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -740,7 +793,7 @@ fun Online_lobby(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(0.55f),
+                modifier = Modifier.fillMaxWidth(0.6f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ){

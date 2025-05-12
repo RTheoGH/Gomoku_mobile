@@ -2,6 +2,7 @@ package com.example.gomoku
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -25,9 +26,10 @@ class NotifService : Service() {
         override fun handleMessage(msg: Message) {
             try{
                 val requests = ArrayList<String>()
+                val invitations = ArrayList<Map<String,String>>()
                 while(auth.currentUser != null) {
                     Thread.sleep(10000)
-                    Log.i("NotifService", "Checking for new requests")
+                    Log.i("NotifService", "Checking for new requests or invitations")
 
                     val user = auth.currentUser!!.uid
                     Log.i("NotifService", "User : $user")
@@ -42,9 +44,37 @@ class NotifService : Service() {
                                 requests.clear()
                                 requests.addAll(newRequests)
                                 val userRequest = requests.last()
-                                showNotification("Nouvelle demande d'ami", "$userRequest souhaite être ami avec vous !")
+                                showNotification("request", "Nouvelle demande d'ami", "$userRequest souhaite être ami avec vous !")
                             }else{
                                 Log.i("NotifService", "No new requests")
+                            }
+
+                            val newInvitations = (res.get("invitation") as? List<Map<String, String>>) ?: emptyList()
+                            Log.i("NotifService", "Invitations : $invitations")
+                            Log.i("NotifService", "New invitations : $newInvitations")
+
+                            if (invitations != newInvitations && newInvitations.size > invitations.size) {
+                                Log.i("NotifService", "New invitations : $newInvitations")
+                                invitations.clear()
+                                invitations.addAll(newInvitations)
+
+                                val lastInvitation = invitations.lastOrNull()
+                                Log.i("NotifService", "Last invitation : $lastInvitation")
+                                if (lastInvitation != null && lastInvitation.size >= 2) {
+                                    val inviter = lastInvitation["inviter"]
+                                    val lobbyId = lastInvitation["lobbyId"]
+                                    Log.i("NotifService", "Inviter : $inviter")
+                                    Log.i("NotifService", "LobbyId : $lobbyId")
+                                    showNotification(
+                                        type = "invitation",
+                                        title = "Invitation à jouer",
+                                        message = "$inviter vous invite à jouer.",
+                                        inviter = inviter,
+                                        lobbyId = lobbyId
+                                    )
+                                }
+                            }else{
+                                Log.i("NotifService", "No new invitations")
                             }
                         }
                 }
@@ -66,7 +96,7 @@ class NotifService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
+        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
 
         serviceHandler?.obtainMessage()?.also { msg ->
             msg.arg1 = startId
@@ -81,10 +111,16 @@ class NotifService : Service() {
     }
 
     override fun onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
+        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
     }
 
-    fun showNotification(title: String, message: String) {
+    fun showNotification(
+        type: String,
+        title: String,
+        message: String,
+        inviter: String? = null,
+        lobbyId: String? = null
+    ) {
         val channelId = "default_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Default Channel"
@@ -98,11 +134,26 @@ class NotifService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("notification_type", type)
+            if(type == "invitation"){
+                putExtra("inviter", inviter)
+                putExtra("lobbyId", lobbyId)
+            }
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
