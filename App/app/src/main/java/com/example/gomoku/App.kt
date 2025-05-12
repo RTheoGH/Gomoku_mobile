@@ -42,6 +42,12 @@ fun App(
             "request" -> {
                 navController.navigate(Screens.Friends.name)
             }
+            "Async" -> {
+                val lobbyId = intent.getStringExtra("lobbyId")
+                if (lobbyId != null) {
+                    navController.navigate(Screens.Online_lobby.name + "/$lobbyId")
+                }
+            }
         }
     }
 

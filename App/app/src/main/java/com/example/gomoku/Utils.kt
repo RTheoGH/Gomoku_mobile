@@ -93,14 +93,17 @@ fun SecondaryText(text : String){
 }
 
 @Composable
-fun switchWithIcon() : Boolean{
-    var checked by remember { mutableStateOf(false) }
-
+fun SwitchWithIcon(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
     Switch(
         modifier = Modifier.padding(4.dp),
         checked = checked,
-        onCheckedChange = { checked = it },
-        thumbContent = if (checked){
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        thumbContent = if (checked) {
             {
                 Icon(
                     imageVector = Icons.Filled.Check,
@@ -112,7 +115,6 @@ fun switchWithIcon() : Boolean{
             null
         }
     )
-    return checked
 }
 
 @SuppressLint("DefaultLocale")

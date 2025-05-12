@@ -33,7 +33,7 @@ fun inSameTimePeriod(t1: Int, t2: Int): Boolean {
 
 suspend fun searchMatch(
     currentUid: String, username: String, elo: Int, profilePic: String,
-    ranked: Boolean, blitz: Boolean,
+    ranked: Boolean, blitz: Boolean, async: Boolean,
     tempsEcoule: Int,
     rdb: FirebaseDatabase, navController: NavHostController
 ): Boolean {
@@ -60,7 +60,7 @@ suspend fun searchMatch(
             createLobby(
                 currentUid, username, profilePic,
                 otherUid, otherPseudo, otherProfilePic,
-                ranked, blitz,
+                ranked, blitz, async,
                 rdb, navController
             )
 
@@ -87,7 +87,7 @@ suspend fun searchMatch(
 fun createLobby(
     uid1: String, pseudo1: String, pic1: String,
     uid2: String, pseudo2: String, pic2: String,
-    ranked: Boolean, blitz: Boolean,
+    ranked: Boolean, blitz: Boolean, async: Boolean,
     rdb: FirebaseDatabase, navController: NavHostController
 ) {
     val lobbyId = "$uid1$uid2".take(20)
@@ -118,6 +118,7 @@ fun createLobby(
         "status" to "started",
         "ranked" to ranked,
         "blitz" to blitz,
+        "async" to async,
         "created_at" to System.currentTimeMillis(),
         "board" to board,
         "turn" to 0,

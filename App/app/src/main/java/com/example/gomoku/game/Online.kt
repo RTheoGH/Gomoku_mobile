@@ -63,9 +63,9 @@ import com.example.gomoku.Custom_row
 import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.SecondaryText
+import com.example.gomoku.SwitchWithIcon
 import com.example.gomoku.formatSecondsToTime
 import com.example.gomoku.nav.Screens
-import com.example.gomoku.switchWithIcon
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
@@ -139,6 +139,7 @@ fun Online_matchmaking(
 
     var ranked by remember { mutableStateOf(false) }
     var blitz by remember { mutableStateOf(false) }
+    var async by remember { mutableStateOf(false) }
 
     var username by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
@@ -201,14 +202,43 @@ fun Online_matchmaking(
                 Custom_card(elo.toString())
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically){
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 SecondaryText(stringResource(R.string.ranked))
-                ranked = switchWithIcon()
-                Log.i("TAG", "Ranked: $ranked")
-                Spacer(modifier = Modifier.width(16.dp))
+                SwitchWithIcon(
+                    checked = ranked,
+                    onCheckedChange = {
+                        ranked = it
+                        if (it) async = false
+                    },
+                    enabled = !async
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 SecondaryText("Blitz")
-                blitz = switchWithIcon()
-                Log.i("TAG", "Blitz: $blitz")
+                SwitchWithIcon(
+                    checked = blitz,
+                    onCheckedChange = {
+                        blitz = it
+                        if (it) async = false
+                    },
+                    enabled = !async
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SecondaryText("Asynchronous")
+                SwitchWithIcon(
+                    checked = async,
+                    onCheckedChange = {
+                        async = it
+                        if (it) {
+                            ranked = false
+                            blitz = false
+                        }
+                    },
+                    enabled = !(ranked || blitz)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -289,7 +319,7 @@ fun Online_matchmaking(
 
             val found = searchMatch(
                 currentUid, username, elo, profile_pic,
-                ranked, blitz,
+                ranked, blitz, async,
                 tempsEcoule,
                 rdb, navController
             )
@@ -316,6 +346,7 @@ fun Online_create(
     var password by remember { mutableStateOf("") }
     var ranked by remember { mutableStateOf(false) }
     var blitz by remember { mutableStateOf(false) }
+    var async by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -347,14 +378,43 @@ fun Online_create(
                 visualTransformation = PasswordVisualTransformation(),
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically){
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 SecondaryText(stringResource(R.string.ranked))
-                ranked = switchWithIcon()
-                Log.i("TAG", "Ranked: $ranked")
-                Spacer(modifier = Modifier.width(16.dp))
+                SwitchWithIcon(
+                    checked = ranked,
+                    onCheckedChange = {
+                        ranked = it
+                        if (it) async = false
+                    },
+                    enabled = !async
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 SecondaryText("Blitz")
-                blitz = switchWithIcon()
-                Log.i("TAG", "Blitz: $blitz")
+                SwitchWithIcon(
+                    checked = blitz,
+                    onCheckedChange = {
+                        blitz = it
+                        if (it) async = false
+                    },
+                    enabled = !async
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SecondaryText("Asynchronous")
+                SwitchWithIcon(
+                    checked = async,
+                    onCheckedChange = {
+                        async = it
+                        if (it) {
+                            ranked = false
+                            blitz = false
+                        }
+                    },
+                    enabled = !(ranked || blitz)
+                )
             }
 
             if (errorMessage != null) {
@@ -405,6 +465,7 @@ fun Online_create(
                                     "status" to "waiting",
                                     "ranked" to ranked,
                                     "blitz" to blitz,
+                                    "async" to async,
                                     "created_at" to System.currentTimeMillis(),
                                     "board" to board,
                                     "turn" to 0,
@@ -567,6 +628,7 @@ fun Online_lobby(
     var status by remember { mutableStateOf("waiting") }
     var ranked by remember { mutableStateOf(false) }
     var blitz by remember { mutableStateOf(false) }
+    var async by remember { mutableStateOf(false) }
 
     var currentUidName by remember { mutableStateOf("") }
     var friends by remember { mutableStateOf(listOf<String>()) }
@@ -583,6 +645,7 @@ fun Online_lobby(
             status = snapshot.child("status").getValue(String::class.java) ?: "waiting"
             ranked = snapshot.child("ranked").getValue(Boolean::class.java) ?: false
             blitz = snapshot.child("blitz").getValue(Boolean::class.java) ?: false
+            async = snapshot.child("async").getValue(Boolean::class.java) ?: false
 
             if(status == "started"){
                 navController.navigate("${Screens.Online_game.name}/$lobbyId")
@@ -703,7 +766,7 @@ fun Online_lobby(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 SecondaryText(stringResource(R.string.room))
-                SecondaryText(stringResource(R.string.ranked) + "/Blitz")
+                SecondaryText(stringResource(R.string.ranked) + "/Blitz/Async")
             }
 
             Row(
@@ -721,6 +784,11 @@ fun Online_lobby(
                     Icon(
                         imageVector = if (blitz) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
                         contentDescription = "Blitz"
+                    )
+                    SecondaryText("/")
+                    Icon(
+                        imageVector = if (async) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                        contentDescription = "Async"
                     )
                 }
             }
@@ -859,6 +927,7 @@ fun Online_game(
 
     var ranked by remember { mutableStateOf(false) }
     var blitz by remember { mutableStateOf(false) }
+    var async by remember { mutableStateOf(false) }
 
     var winner by remember { mutableStateOf("") }
 
@@ -897,6 +966,7 @@ fun Online_game(
 
             ranked = snapshot.child("ranked").getValue(Boolean::class.java) ?: false
             blitz = snapshot.child("blitz").getValue(Boolean::class.java) ?: false
+            async = snapshot.child("async").getValue(Boolean::class.java) ?: false
 
             val boardSnapshot = snapshot.child("board")
             val newBoard = MutableList(15) { MutableList(15) { GomokuCell(0, 0, CellState.EMPTY) } }
@@ -1020,7 +1090,7 @@ fun Online_game(
         }
     }
 
-    DisposableEffect(Unit){
+    DisposableEffect(Unit) {
         lobbyRef.addValueEventListener(valueEventListener)
         lobbyRef.child("chat").addChildEventListener(chatEventListener)
         onDispose {

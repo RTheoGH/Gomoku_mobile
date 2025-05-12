@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 
 class NotifService : Service() {
@@ -21,12 +22,24 @@ class NotifService : Service() {
     private var serviceHandler: ServiceHandler? = null
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private lateinit var rdb: FirebaseDatabase
 
     private inner class ServiceHandler(looper: Looper) : Handler(looper) {
         override fun handleMessage(msg: Message) {
             try{
                 val requests = ArrayList<String>()
                 val invitations = ArrayList<Map<String,String>>()
+
+                var board = MutableList(15) { i ->
+                    MutableList(15) { j ->
+                        mapOf(
+                            "row" to i,
+                            "col" to j,
+                            "state" to "EMPTY"
+                        )
+                    }
+                }
+
                 while(auth.currentUser != null) {
                     Thread.sleep(10000)
                     Log.i("NotifService", "Checking for new requests or invitations")
@@ -77,6 +90,54 @@ class NotifService : Service() {
                                 Log.i("NotifService", "No new invitations")
                             }
                         }
+
+
+                    rdb.getReference("lobbies").get().addOnSuccessListener { res ->
+                        for (lobbySnapshot in res.children) {
+
+                            val lobbyId = lobbySnapshot.key ?: continue
+                            val async = lobbySnapshot.child("async").getValue(Boolean::class.java) ?: false
+
+                            if (async) {
+                                val boardSnapshot = lobbySnapshot.child("board")
+                                val newBoard = MutableList(15) { i ->
+                                    MutableList(15) { j ->
+                                        val cellSnapshot = boardSnapshot.child(i.toString()).child(j.toString())
+                                        val row = cellSnapshot.child("row").getValue(Int::class.java) ?: i
+                                        val col = cellSnapshot.child("col").getValue(Int::class.java) ?: j
+                                        val state = cellSnapshot.child("state").getValue(String::class.java) ?: "EMPTY"
+                                        mapOf("row" to row, "col" to col, "state" to state)
+                                    }
+                                }
+
+                                val user1uid = lobbySnapshot.child("player1").child("uid").getValue(String::class.java) ?: ""
+                                val user1name = lobbySnapshot.child("player1").child("pseudo").getValue(String::class.java) ?: ""
+                                val user2uid = lobbySnapshot.child("player2").child("uid").getValue(String::class.java) ?: ""
+                                val user2name = lobbySnapshot.child("player2").child("pseudo").getValue(String::class.java) ?: ""
+                                val playerTurn = lobbySnapshot.child("turn").getValue(Int::class.java) ?: 0
+
+                                Log.i("NotifService", "playerTurn: $playerTurn, user: $user, user1uid: $user1uid, user2uid: $user2uid")
+
+                                if (user == user1uid || user == user2uid) {
+                                    if (board.toString() != newBoard.toString()) {
+                                        board = newBoard
+
+                                        val isUserTurn = (user == user1uid && playerTurn == 0) || (user == user2uid && playerTurn == 1)
+                                        if (isUserTurn) {
+                                            showNotification(
+                                                type = "Async",
+                                                title = "Coup à jouer",
+                                                message = "C'est à votre tour de jouer dans le lobby $lobbyId.",
+                                                lobbyId = lobbyId
+                                            )
+                                        }
+                                    } else {
+                                        Log.i("NotifService", "No new board for lobby $lobbyId")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             } catch (e: InterruptedException){
                 Thread.currentThread().interrupt()
@@ -92,11 +153,12 @@ class NotifService : Service() {
             serviceHandler = ServiceHandler(looper)
             auth = FirebaseAuth.getInstance()
             db = FirebaseFirestore.getInstance()
+            rdb = FirebaseDatabase.getInstance("https://gomoku-76114-default-rtdb.europe-west1.firebasedatabase.app")
         }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
 
         serviceHandler?.obtainMessage()?.also { msg ->
             msg.arg1 = startId
@@ -111,7 +173,7 @@ class NotifService : Service() {
     }
 
     override fun onDestroy() {
-        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
     }
 
     fun showNotification(
@@ -139,6 +201,9 @@ class NotifService : Service() {
             putExtra("notification_type", type)
             if(type == "invitation"){
                 putExtra("inviter", inviter)
+                putExtra("lobbyId", lobbyId)
+            }
+            if(type == "Async"){
                 putExtra("lobbyId", lobbyId)
             }
         }

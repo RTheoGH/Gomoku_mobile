@@ -184,7 +184,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
             }
         }
 
-        Spacer(modifier = Modifier.height(128.dp))
+        Spacer(modifier = Modifier.height(164.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -208,21 +208,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
             ) {
                 Text(text = stringResource(id = R.string.play_online))
             }
-            Button(
-                onClick = {
-                    //navController.navigate(Screens.Asynchronus.name)
-                    (context as? MainActivity)?.showNotification(
-                        "Information",
-                        "Pas encore implémenté"
-                    )
-                },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
-                enabled = auth.currentUser != null
-            ) {
-                Text(text = stringResource(id = R.string.play_asynchronus))
-            }
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(128.dp))
 
             Row(
                 horizontalArrangement = Arrangement.Center,

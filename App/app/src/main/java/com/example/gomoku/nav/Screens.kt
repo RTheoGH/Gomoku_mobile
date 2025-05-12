@@ -15,10 +15,5 @@ enum class Screens {
     Online_create,
     Online_join,
     Online_lobby,
-    Online_game,
-    Asynchronus,
-    Asynchronus_create,
-    Asynchronus_join,
-    Asynchronus_lobby,
-    Asynchronus_game
+    Online_game
 }

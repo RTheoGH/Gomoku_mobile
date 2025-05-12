@@ -13,11 +13,6 @@ import com.example.gomoku.Menu
 import com.example.gomoku.user.Profile
 import com.example.gomoku.user.Sign_in
 import com.example.gomoku.user.Sign_up
-import com.example.gomoku.game.Asynchronus
-import com.example.gomoku.game.Asynchronus_create
-import com.example.gomoku.game.Asynchronus_game
-import com.example.gomoku.game.Asynchronus_join
-import com.example.gomoku.game.Asynchronus_lobby
 import com.example.gomoku.game.Offline_game
 import com.example.gomoku.game.Offline_lobby
 import com.example.gomoku.game.Online
@@ -106,22 +101,6 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         ) { backStackEntry ->
             val lobbyId = backStackEntry.arguments?.getString("lobbyId") ?: ""
             Online_game(pad, navController,auth,db,rdb,lobbyId=lobbyId)
-        }
-
-        composable(route = Screens.Asynchronus.name) {
-            Asynchronus(pad, navController)
-        }
-        composable(route = Screens.Asynchronus_create.name) {
-            Asynchronus_create(pad, navController)
-        }
-        composable(route = Screens.Asynchronus_join.name) {
-            Asynchronus_join(pad, navController)
-        }
-        composable(route = Screens.Asynchronus_lobby.name) {
-            Asynchronus_lobby(pad, navController)
-        }
-        composable(route = Screens.Asynchronus_game.name) {
-            Asynchronus_game(pad, navController)
         }
     }
 }
