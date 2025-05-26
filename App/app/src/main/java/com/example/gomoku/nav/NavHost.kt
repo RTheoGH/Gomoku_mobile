@@ -14,6 +14,7 @@ import com.example.gomoku.user.Profile
 import com.example.gomoku.user.Sign_in
 import com.example.gomoku.user.Sign_up
 import com.example.gomoku.game.Offline_game
+import com.example.gomoku.game.Offline_game_IA
 import com.example.gomoku.game.Offline_lobby
 import com.example.gomoku.game.Online
 import com.example.gomoku.game.Online_create
@@ -69,7 +70,7 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
         ) { backStackEntry ->
             val player1 = backStackEntry.arguments?.getString("player1") ?: ""
             val player2 = backStackEntry.arguments?.getString("player2") ?: ""
-            Offline_game(pad, navController, player1 = player1, player2 = player2)
+            Offline_game_IA(pad, navController, player1 = player1, player2 = player2)
         }
 
         composable(route = Screens.Online.name) {
