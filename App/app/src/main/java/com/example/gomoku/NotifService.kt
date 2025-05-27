@@ -157,8 +157,14 @@ class NotifService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
+
+        if (intent == null) {
+            Log.w("NotifService", "Service restarted with a null intent. This is expected with START_STICKY.")
+        } else {
+            Log.i("NotifService", "Service started with intent: ${intent.action}")
+        }
 
         serviceHandler?.obtainMessage()?.also { msg ->
             msg.arg1 = startId
@@ -168,7 +174,7 @@ class NotifService : Service() {
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent): IBinder? {
+    override fun onBind(intent: Intent?): IBinder? {
         return null
     }
 

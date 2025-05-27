@@ -191,9 +191,9 @@ fun evaluate_move(
     return (attackPoints * 2) + (defensePoints * 3)
 }
 
-
-fun play_ia_impossible(board: List<List<GomokuCell>>, aiState: CellState): Pair<Int, Int>? {
-    val enemyState = if (aiState == CellState.BLACK) CellState.WHITE else CellState.BLACK
+fun play_ia_hard(board: List<List<GomokuCell>>): Pair<Int, Int>? {
+    val aiState = CellState.BLACK
+    val enemyState = CellState.WHITE
 
     var bestScore = 1
     var bestMove: Pair<Int, Int>? = play_random(board)

@@ -21,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -528,6 +530,29 @@ fun joinLobbyAndRemoveInvitation(inviter: String, lobbyId: String){
                 .update("invitation", FieldValue.arrayRemove(mapOf("inviter" to inviter, "lobbyId" to lobbyId)))
         }else{
             return@addOnSuccessListener
+        }
+    }
+}
+
+@Composable
+fun ChooseDifficulty(choice: MutableState<String>, select: List<String>) {
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        select.forEach { difficulty ->
+            RadioButton(
+                selected = choice.value == difficulty,
+                onClick = { choice.value = difficulty }
+            )
+            Text(
+                text = when(difficulty) {
+                    "Easy" -> stringResource(R.string.easy)
+                    "Medium" -> stringResource(R.string.medium)
+                    "Hard" -> stringResource(R.string.hard)
+                    else -> stringResource(R.string.easy)
+                }
+            )
         }
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,15 +35,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
+import com.example.gomoku.ChooseDifficulty
 import com.example.gomoku.Custom_row
 import com.example.gomoku.ModeText
 import com.example.gomoku.R
+import com.example.gomoku.SecondaryText
+import com.example.gomoku.SwitchWithIcon
 import com.example.gomoku.nav.Screens
 
 @Composable
 fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
     var player1 by remember { mutableStateOf("") }
     var player2 by remember { mutableStateOf("") }
+
+    var ai by remember { mutableStateOf(false) }
+    val choiceState = remember { mutableStateOf("Easy") }
+    val choice by choiceState
+    val difficultyOptions = listOf("Easy", "Medium", "Hard")
 
     Column(
         modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
@@ -66,15 +75,37 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             )
 
             OutlinedTextField(
-                value = player2,
-                onValueChange = { if(it.length <= 10) player2 = it },
+                value = if(!ai) player2 else "Robotku",
+                onValueChange = {
+                    if(it.length <= 10){
+                        player2 = if(ai) "Robotku" else it
+                    }
+                },
                 label = { Text(text = stringResource(R.string.player2)) },
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
+                enabled = !ai
             )
+
+            Row(verticalAlignment = Alignment.CenterVertically){
+                SecondaryText(stringResource(R.string.play_AI))
+                SwitchWithIcon(
+                    checked = ai,
+                    onCheckedChange = {
+                        ai = it
+                    }
+                )
+            }
+
+            if(ai){
+                SecondaryText(text = stringResource(R.string.ai_diff))
+                ChooseDifficulty(choice = choiceState, select = difficultyOptions)
+
+            }
 
             Button(
                 onClick = {
-                    val route = "${Screens.Offline_game.name}/$player1/$player2"
+                    if(ai) player2 = "Robotku"
+                    val route = "${Screens.Offline_game.name}/$player1/$player2/$ai/$choice"
                     navController.navigate(route)
                 },
             ){
@@ -142,7 +173,6 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                             isFinished = true
                             showDialog = true
                             println("gagné !!!!!!")
-                            //TODO : enregistrer la partie dans l'historique
                         }
 
                         playerTurn = 1 - playerTurn
@@ -176,7 +206,7 @@ fun Offline_game(pad : PaddingValues, navController: NavHostController, player1:
                     confirmButton = {
                         Button(onClick = {
                             showDialog = false
-                            val route = "${Screens.Offline_game.name}/$player1/$player2"
+                            val route = "${Screens.Offline_game.name}/$player1/$player2/false/"
                             navController.navigate(route){
                                 popUpTo(route){
                                     inclusive = true

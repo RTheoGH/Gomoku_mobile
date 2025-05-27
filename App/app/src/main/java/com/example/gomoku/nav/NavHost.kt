@@ -62,15 +62,23 @@ fun Navigation(pad : PaddingValues, navController: NavHostController, startDesti
             Offline_lobby(pad, navController)
         }
         composable(
-            route = "${Screens.Offline_game.name}/{player1}/{player2}",
+            route = "${Screens.Offline_game.name}/{player1}/{player2}/{ai}/{choice}",
             arguments = listOf(
                 navArgument("player1") { nullable = false },
-                navArgument("player2") { nullable = false }
+                navArgument("player2") { nullable = false },
+                navArgument("ai") { defaultValue = false },
+                navArgument("choice") { defaultValue = "Easy" }
             )
         ) { backStackEntry ->
             val player1 = backStackEntry.arguments?.getString("player1") ?: ""
             val player2 = backStackEntry.arguments?.getString("player2") ?: ""
-            Offline_game_IA(pad, navController, player1 = player1, player2 = player2)
+            val ai = backStackEntry.arguments?.getBoolean("ai") ?: false
+            val choice = backStackEntry.arguments?.getString("choice") ?: "Easy"
+            if (ai) {
+                Offline_game_IA(pad, navController, player1 = player1, player2 = player2, choice = choice)
+            } else {
+                Offline_game(pad, navController, player1 = player1, player2 = player2)
+            }
         }
 
         composable(route = Screens.Online.name) {

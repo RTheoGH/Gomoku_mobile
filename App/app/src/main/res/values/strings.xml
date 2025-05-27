@@ -72,4 +72,9 @@
     <string name="searchmore">C\'est long la...</string>
     <string name="notifications_on">Permission accordée</string>
     <string name="notifications_off">Permission refusée</string>
+    <string name="play_AI">VS IA</string>
+    <string name="ai_diff">Difficulté</string>
+    <string name="easy">Facile</string>
+    <string name="medium">Moyen</string>
+    <string name="hard">Difficile</string>
 </resources>

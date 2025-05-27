@@ -73,4 +73,9 @@
     <string name="search40">Looking further...</string>
     <string name="notifications_on">Permission granted</string>
     <string name="notifications_off">Permission denied</string>
+    <string name="play_AI">VS AI</string>
+    <string name="ai_diff">Difficulty</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
 </resources>

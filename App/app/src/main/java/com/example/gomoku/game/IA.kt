@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,58 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.Back
 import com.example.gomoku.Custom_row
-import com.example.gomoku.ModeText
 import com.example.gomoku.R
 import com.example.gomoku.nav.Screens
 
-@Composable
-fun Offline_lobby_IA(pad : PaddingValues, navController: NavHostController){
-    var player1 by remember { mutableStateOf("") }
-    var player2 by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
-    ){
-        Back(navController)
-
-        Spacer(modifier = Modifier.height(112.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ){
-            ModeText("Offline")
-
-            OutlinedTextField(
-                value = player1,
-                onValueChange = { if(it.length <= 10) player1 = it },
-                label = { Text(text = stringResource(R.string.player1)) },
-                modifier = Modifier.padding(4.dp)
-            )
-
-            OutlinedTextField(
-                value = player2,
-                onValueChange = { if(it.length <= 10) player2 = it },
-                label = { Text(text = stringResource(R.string.player2)) },
-                modifier = Modifier.padding(4.dp)
-            )
-
-            Button(
-                onClick = {
-                    val route = "${Screens.Offline_game.name}/$player1/$player2"
-                    navController.navigate(route)
-                },
-            ){
-                Text(text = stringResource(R.string.play))
-            }
-        }
-    }
-}
-
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun Offline_game_IA(pad : PaddingValues, navController: NavHostController, player1: String, player2: String){
+fun Offline_game_IA(pad : PaddingValues, navController: NavHostController, player1: String, player2: String, choice: String){
     val context = LocalContext.current
 
     Log.i("TAG", "Offline_game: $player1, $player2")
@@ -105,23 +58,27 @@ fun Offline_game_IA(pad : PaddingValues, navController: NavHostController, playe
     var turn_history = remember { mutableStateListOf(context.getString(R.string.game_start_message)) }
     val listState = rememberLazyListState()
     if(playerTurn == 1 && !isFinished){
-        val coup_random = play_ia_medium(board)
-        if (coup_random != null) {
-            board[coup_random.first] = board[coup_random.first].toMutableList().apply {
-                this[coup_random.second] = board[coup_random.first][coup_random.second].copy(state = CellState.BLACK)
+        val coupAI = when{
+            choice == "Easy" -> play_random(board)
+            choice == "Medium" -> play_ia_medium(board)
+            choice == "Hard" -> play_ia_hard(board)
+            else -> play_random(board)
+        }
+        if (coupAI != null) {
+            board[coupAI.first] = board[coupAI.first].toMutableList().apply {
+                this[coupAI.second] = board[coupAI.first][coupAI.second].copy(state = CellState.BLACK)
             }
             val player = if(playerTurn == 0) player1 else player2
-            val pos_x = coup_random.first+1
-            val pos_y = coup_random.second+1
+            val pos_x = coupAI.first+1
+            val pos_y = coupAI.second+1
 
             turn_history.add(player+" "+context.getString(R.string.played_in)+" "+pos_x+","+pos_y+".")
             println(turn_history)
 
-            if (check_win(board, coup_random.first, coup_random.second, size)) {
+            if (check_win(board, coupAI.first, coupAI.second, size)) {
                 isFinished = true
                 showDialog = true
                 println("gagné !!!!!!")
-                //TODO : enregistrer la partie dans l'historique
             }
 
             playerTurn = 1 - playerTurn
@@ -165,7 +122,6 @@ fun Offline_game_IA(pad : PaddingValues, navController: NavHostController, playe
                             isFinished = true
                             showDialog = true
                             println("gagné !!!!!!")
-                            //TODO : enregistrer la partie dans l'historique
                         }
 
                         playerTurn = 1 - playerTurn
@@ -199,7 +155,7 @@ fun Offline_game_IA(pad : PaddingValues, navController: NavHostController, playe
                     confirmButton = {
                         Button(onClick = {
                             showDialog = false
-                            val route = "${Screens.Offline_game.name}/$player1/$player2"
+                            val route = "${Screens.Offline_game.name}/$player1/$player2/true/$choice"
                             navController.navigate(route){
                                 popUpTo(route){
                                     inclusive = true
