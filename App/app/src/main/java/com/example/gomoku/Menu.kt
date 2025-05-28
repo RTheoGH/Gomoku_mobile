@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowCircleRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,11 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 
 @SuppressLint("DiscouragedApi")
 @Composable
-fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore){
+fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAuth, db: FirebaseFirestore, rdb: FirebaseDatabase){
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
@@ -60,6 +63,10 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
 
     var pp by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
+
+    var showIngame by remember { mutableStateOf(false) }
+    var games by remember { mutableStateOf(listOf<String>()) }
+
 
     LaunchedEffect(auth.currentUser) {
         if (auth.currentUser != null) {
@@ -209,7 +216,19 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 Text(text = stringResource(id = R.string.play_online))
             }
 
-            Spacer(modifier = Modifier.height(128.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    //TODO : show current player running async games
+                    showIngame = true
+                },
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+            ){
+                Text(text = stringResource(id = R.string.async_games))
+            }
+
+            Spacer(modifier = Modifier.height(64.dp))
 
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -261,6 +280,52 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                             Text(text = "Cool !")
                         }
                     }
+                )
+            }
+
+            LaunchedEffect(showIngame) {
+                if(!showIngame) return@LaunchedEffect
+                rdb.getReference("lobbies").get().addOnSuccessListener { res ->
+                    for (lobbySnapshot in res.children) {
+                        if(lobbySnapshot.child("async").getValue(Boolean::class.java) == true && (lobbySnapshot.child("player1").child("uid").getValue(String::class.java) == auth.currentUser!!.uid || lobbySnapshot.child("player2").child("uid").getValue(String::class.java) == auth.currentUser!!.uid)){
+                            games += lobbySnapshot.key.toString()
+                        }
+                    }
+                }
+                Log.i("TAG", "Menu: ${games.size}")
+            }
+
+            if(showIngame){
+                AlertDialog(
+                    onDismissRequest = { showIngame = false },
+                    title = { Text(text = stringResource(id = R.string.async_games)) },
+                    text = {
+                        if(games.isEmpty()) Text(text = stringResource(id = R.string.no_async_games))
+                         else {
+                             Column {
+                                games.forEach { g ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ){
+                                        Text(text = g)
+                                        IconButton(
+                                            onClick = {
+                                                navController.navigate(Screens.Online_lobby.name + "/$g")
+                                            }
+                                        ){
+                                            Icon(
+                                                imageVector = Icons.Filled.ArrowCircleRight,
+                                                contentDescription = "play"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {}
                 )
             }
         }

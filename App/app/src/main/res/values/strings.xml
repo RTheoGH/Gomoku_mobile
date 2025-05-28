@@ -77,4 +77,6 @@
     <string name="easy">Facile</string>
     <string name="medium">Moyen</string>
     <string name="hard">Difficile</string>
+    <string name="async_games">Parties en cours</string>
+    <string name="no_async_games">Aucune partie en cours</string>
 </resources>

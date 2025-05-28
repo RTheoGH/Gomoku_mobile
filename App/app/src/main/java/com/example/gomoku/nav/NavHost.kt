@@ -30,7 +30,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun Navigation(pad : PaddingValues, navController: NavHostController, startDestination: String, auth: FirebaseAuth, db: FirebaseFirestore, rdb: FirebaseDatabase){
     NavHost(navController = navController, startDestination = startDestination){
         composable(route = Screens.Menu.name) {
-            Menu(pad, navController, auth, db)
+            Menu(pad, navController, auth, db, rdb)
         }
 
         composable(route = Screens.Sign_in.name) {

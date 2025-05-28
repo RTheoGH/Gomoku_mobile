@@ -99,7 +99,6 @@ fun Offline_lobby(pad : PaddingValues, navController: NavHostController){
             if(ai){
                 SecondaryText(text = stringResource(R.string.ai_diff))
                 ChooseDifficulty(choice = choiceState, select = difficultyOptions)
-
             }
 
             Button(
