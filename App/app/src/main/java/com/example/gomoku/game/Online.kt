@@ -1296,21 +1296,26 @@ fun Online_game(
                 confirmButton = {
                     Button(onClick = {
                         showDialogLeave = false
-                        val currentUid = auth.currentUser!!.uid
 
-                        val winnerPseudo = if(currentUid == player1uid) player2 else player1
-                        val leaverPseudo = if(currentUid == player1uid) player1 else player2
-                        val leaverMessage = "$leaverPseudo "+context.getString(R.string.leave_message)
+                        if(!async) {
+                            val currentUid = auth.currentUser!!.uid
 
-                        lobbyRef.child("status").setValue("finished")
-                        lobbyRef.child("winner").setValue(winnerPseudo)
-                        lobbyRef.child("turn_history").get().addOnSuccessListener { snapshot ->
-                            val updatedHistory = mutableListOf<String>()
-                            snapshot.children.forEach { snap ->
-                                snap.getValue(String::class.java)?.let { updatedHistory.add(it) }
+                            val winnerPseudo = if (currentUid == player1uid) player2 else player1
+                            val leaverPseudo = if (currentUid == player1uid) player1 else player2
+                            val leaverMessage =
+                                "$leaverPseudo " + context.getString(R.string.leave_message)
+
+                            lobbyRef.child("status").setValue("finished")
+                            lobbyRef.child("winner").setValue(winnerPseudo)
+                            lobbyRef.child("turn_history").get().addOnSuccessListener { snapshot ->
+                                val updatedHistory = mutableListOf<String>()
+                                snapshot.children.forEach { snap ->
+                                    snap.getValue(String::class.java)
+                                        ?.let { updatedHistory.add(it) }
+                                }
+                                updatedHistory.add(leaverMessage)
+                                lobbyRef.child("turn_history").setValue(updatedHistory)
                             }
-                            updatedHistory.add(leaverMessage)
-                            lobbyRef.child("turn_history").setValue(updatedHistory)
                         }
 
                         navController.navigate(Screens.Menu.name){

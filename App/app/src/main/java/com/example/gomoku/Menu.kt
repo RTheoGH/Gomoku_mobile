@@ -325,7 +325,13 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                             }
                         }
                     },
-                    confirmButton = {}
+                    confirmButton = {
+                        TextButton(
+                            onClick = { showIngame = false }
+                        ) {
+                            Text(text = "OK")
+                        }
+                    }
                 )
             }
         }
