@@ -534,6 +534,49 @@ fun joinLobbyAndRemoveInvitation(inviter: String, lobbyId: String){
     }
 }
 
+fun removeInvitationFromFriends(inviter: String, lobbyId: String){
+    val db = FirebaseFirestore.getInstance()
+
+    db.collection("users").whereEqualTo("pseudo", inviter).get().addOnSuccessListener { res ->
+        if(!res.isEmpty){
+            val doc = res.documents[0]
+            val friends = doc.get("friends") as? List<String> ?: emptyList()
+            Log.i("TAG", "removeInvitationFromFriends: friends : $friends")
+
+            db.collection("users").whereIn("pseudo", friends).get().addOnSuccessListener { fRes ->
+                val friendsDocs = fRes.documents
+                Log.i("TAG", "removeInvitationFromFriends: friendsDocs : $friendsDocs")
+
+                db.runTransaction { transaction ->
+                    friendsDocs.forEach { f ->
+                        val fRef = db.collection("users").document(f.id)
+                        val fS = transaction.get(fRef)
+                        val invitations = fS.get("invitation") as? List<Map<String, String>> ?: emptyList()
+                        val newInvitations = invitations.filter { it["lobbyId"] != lobbyId }
+
+                        if(newInvitations.size != invitations.size){
+                            transaction.update(fRef, "invitation", newInvitations)
+                            Log.i("TAG", "removeInvitationFromFriends: invitations updated")
+                        }else{
+                            Log.i("TAG", "removeInvitationFromFriends: invitations not updated")
+                        }
+                    }
+                }.addOnSuccessListener {
+                    Log.i("TAG", "Invitations supprimées")
+                }.addOnFailureListener {
+                    Log.e("TAG", "Erreur transaction")
+                }
+            }.addOnFailureListener {
+                Log.e("TAG", "Erreur recupération amis")
+            }
+        } else {
+            Log.e("TAG", "Aucun utilisateur")
+        }
+    }.addOnFailureListener {
+        Log.e("TAG", "Erreur recupération utilisateur")
+    }
+}
+
 @Composable
 fun ChooseDifficulty(choice: MutableState<String>, select: List<String>) {
     Row(

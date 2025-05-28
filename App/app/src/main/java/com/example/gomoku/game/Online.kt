@@ -66,6 +66,7 @@ import com.example.gomoku.SecondaryText
 import com.example.gomoku.SwitchWithIcon
 import com.example.gomoku.formatSecondsToTime
 import com.example.gomoku.nav.Screens
+import com.example.gomoku.removeInvitationFromFriends
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
@@ -651,6 +652,10 @@ fun Online_lobby(
                 navController.navigate("${Screens.Online_game.name}/$lobbyId")
             }else if (player2.isNotEmpty()){
                 lobbyRef.child("status").setValue("ready")
+            }
+
+            if(status == "deleted" && isHost) {
+                removeInvitationFromFriends(player1, lobbyId)
             }
 
             if(status == "deleted" && !isHost){
