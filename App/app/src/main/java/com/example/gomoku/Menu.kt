@@ -3,6 +3,7 @@ package com.example.gomoku
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +32,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -64,9 +64,9 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
     var pp by remember { mutableStateOf("") }
     var elo by remember { mutableStateOf(0) }
 
-    var showIngame by remember { mutableStateOf(false) }
+    var showGamesAndInvitations by remember { mutableStateOf(false) }
     var games by remember { mutableStateOf(listOf<String>()) }
-
+    var invitations by remember { mutableStateOf(listOf<Map<String, String>>()) }
 
     LaunchedEffect(auth.currentUser) {
         if (auth.currentUser != null) {
@@ -86,7 +86,10 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(pad).padding(8.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(pad)
+            .padding(8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -120,7 +123,9 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 Box{
                     IconButton(
                         onClick = { expanded = true },
-                        modifier = Modifier.padding(4.dp).size(72.dp)
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(72.dp)
                     ) {
                         if(loading){
                             CircularProgressIndicator(
@@ -202,7 +207,9 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Offline_lobby.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(id = R.string.play_offline))
             }
@@ -210,7 +217,9 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Online.name)
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(0.6f),
                 enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.play_online))
@@ -220,12 +229,13 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
 
             Button(
                 onClick = {
-                    //TODO : show current player running async games
-                    showIngame = true
+                    showGamesAndInvitations = true
                 },
-                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(0.6f)
             ){
-                Text(text = stringResource(id = R.string.async_games))
+                Text(text = stringResource(id = R.string.games_and_invitations))
             }
 
             Spacer(modifier = Modifier.height(64.dp))
@@ -283,8 +293,13 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 )
             }
 
-            LaunchedEffect(showIngame) {
-                if(!showIngame) return@LaunchedEffect
+            LaunchedEffect(showGamesAndInvitations) {
+                if(!showGamesAndInvitations) return@LaunchedEffect
+
+                db.collection("users").document(auth.currentUser!!.uid).get().addOnSuccessListener { res ->
+                    invitations = res.data!!["invitation"] as List<Map<String, String>>
+                }
+
                 rdb.getReference("lobbies").get().addOnSuccessListener { res ->
                     for (lobbySnapshot in res.children) {
                         if(lobbySnapshot.child("async").getValue(Boolean::class.java) == true && (lobbySnapshot.child("player1").child("uid").getValue(String::class.java) == auth.currentUser!!.uid || lobbySnapshot.child("player2").child("uid").getValue(String::class.java) == auth.currentUser!!.uid)){
@@ -292,29 +307,57 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                         }
                     }
                 }
-                Log.i("TAG", "Menu: ${games.size}")
             }
 
-            if(showIngame){
+            if(showGamesAndInvitations){
                 AlertDialog(
-                    onDismissRequest = { showIngame = false },
-                    title = { Text(text = stringResource(id = R.string.async_games)) },
+                    onDismissRequest = { showGamesAndInvitations = false },
+                    title = { Text(text = stringResource(id = R.string.games_and_invitations)) },
                     text = {
-                        if(games.isEmpty()) Text(text = stringResource(id = R.string.no_async_games))
-                         else {
-                             Column {
+                        Column {
+                            if(invitations.isEmpty()) Text(text = stringResource(R.string.no_invitations))
+                            else {
+                                invitations.forEach { i ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(text = i["inviter"]!!)
+                                        IconButton(
+                                            onClick = {
+                                                joinLobbyAndRemoveInvitation(i["inviter"]!!,i["lobbyId"]!!)
+                                                navController.navigate(Screens.Online_lobby.name + "/${i["lobbyId"]!!}")
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.ArrowCircleRight,
+                                                contentDescription = "play"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .border(1.dp, color = MaterialTheme.colorScheme.primary)){}
+                            Spacer(modifier = Modifier.height(4.dp))
+                            if(games.isEmpty()) Text(text = stringResource(R.string.no_async_games))
+                            else {
                                 games.forEach { g ->
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
-                                    ){
+                                    ) {
                                         Text(text = g)
                                         IconButton(
                                             onClick = {
-                                                navController.navigate(Screens.Online_lobby.name + "/$g")
+                                                navController.navigate(Screens.Online_game.name + "/$g")
                                             }
-                                        ){
+                                        ) {
                                             Icon(
                                                 imageVector = Icons.Filled.ArrowCircleRight,
                                                 contentDescription = "play"
@@ -327,7 +370,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                     },
                     confirmButton = {
                         TextButton(
-                            onClick = { showIngame = false }
+                            onClick = { showGamesAndInvitations = false }
                         ) {
                             Text(text = "OK")
                         }
