@@ -207,9 +207,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Offline_lobby.name)
                 },
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(0.6f)
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f)
             ) {
                 Text(text = stringResource(id = R.string.play_offline))
             }
@@ -217,9 +215,7 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     navController.navigate(Screens.Online.name)
                 },
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(0.6f),
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
                 enabled = auth.currentUser != null
             ) {
                 Text(text = stringResource(id = R.string.play_online))
@@ -231,9 +227,8 @@ fun Menu(pad : PaddingValues, navController: NavHostController, auth: FirebaseAu
                 onClick = {
                     showGamesAndInvitations = true
                 },
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(0.6f)
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.6f),
+                enabled = auth.currentUser != null
             ){
                 Text(text = stringResource(id = R.string.games_and_invitations))
             }

@@ -371,7 +371,7 @@ fun Profile(pad : PaddingValues, navController: NavHostController, auth: Firebas
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Historique des parties",
+            text = stringResource(R.string.historic),
             fontSize = 20.sp,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(4.dp)

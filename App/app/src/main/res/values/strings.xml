@@ -80,4 +80,5 @@
     <string name="games_and_invitations">Parties et Invitations</string>
     <string name="no_async_games">Pas de partie en cours</string>
     <string name="no_invitations">Pas d\'invitations</string>
+    <string name="historic">Historique des parties</string>
 </resources>

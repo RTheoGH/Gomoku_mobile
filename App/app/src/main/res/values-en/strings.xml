@@ -81,4 +81,5 @@
     <string name="games_and_invitations">Games and Invitations</string>
     <string name="no_async_games">No game in progress</string>
     <string name="no_invitations">No Invitations</string>
+    <string name="historic">Game History</string>
 </resources>
