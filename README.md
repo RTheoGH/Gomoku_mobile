@@ -24,7 +24,7 @@ La maquette du projet est disponible sur Figma :
 
 Quelques vues de notre application :
 
-<img src="/Screenshots/menu_principal.png" alt="menu" style="width:20%; height:auto;"> <img src="/Screenshots/partie_hors_ligne.png" alt="menu" style="width:20%; height:auto;"> <img src="/Screenshots/espace_user.png" alt="menu" style="width:20%; height:auto;"> <img src="/Screenshots/leaderboard.png" alt="menu" style="width:20%; height:auto;">
+<img src="/Screenshots/menu_on.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/partie_hors_ligne.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/historique.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/leaderboard.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/amis.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/blitz.png" alt="menu" style="width:15%; height:auto;">
 
 ---
 
