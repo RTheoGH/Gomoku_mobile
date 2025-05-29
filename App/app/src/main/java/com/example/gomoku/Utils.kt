@@ -45,6 +45,7 @@ import androidx.navigation.NavHostController
 import com.example.gomoku.nav.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -541,39 +542,51 @@ fun removeInvitationFromFriends(inviter: String, lobbyId: String){
         if(!res.isEmpty){
             val doc = res.documents[0]
             val friends = doc.get("friends") as? List<String> ?: emptyList()
-            Log.i("TAG", "removeInvitationFromFriends: friends : $friends")
 
             db.collection("users").whereIn("pseudo", friends).get().addOnSuccessListener { fRes ->
                 val friendsDocs = fRes.documents
-                Log.i("TAG", "removeInvitationFromFriends: friendsDocs : $friendsDocs")
 
                 db.runTransaction { transaction ->
-                    friendsDocs.forEach { f ->
-                        val fRef = db.collection("users").document(f.id)
-                        val fS = transaction.get(fRef)
-                        val invitations = fS.get("invitation") as? List<Map<String, String>> ?: emptyList()
-                        val newInvitations = invitations.filter { it["lobbyId"] != lobbyId }
+                    val docsToUpdate = mutableListOf<Pair<DocumentReference, List<Map<String, String>>>>()
 
-                        if(newInvitations.size != invitations.size){
+                    friendsDocs.forEach { f ->
+                        try {
+                            val fRef = db.collection("users").document(f.id)
+                            val fS = transaction.get(fRef)
+                            val invitations = (fS.get("invitation") as? List<*>)?.filterIsInstance<Map<String, String>>() ?: emptyList()
+                            val newInvitations = invitations.filter { it["lobbyId"] != lobbyId }
+
+                            if (newInvitations.size != invitations.size) {
+                                docsToUpdate.add(Pair(fRef, newInvitations))
+                            }
+                        } catch (e: Exception) {
+                            Log.e("rmvInvFromFriends", "Exception during read for ${f.id}: ${e.message}")
+                            throw e
+                        }
+                    }
+
+                    docsToUpdate.forEach { (fRef, newInvitations) ->
+                        try{
                             transaction.update(fRef, "invitation", newInvitations)
-                            Log.i("TAG", "removeInvitationFromFriends: invitations updated")
-                        }else{
-                            Log.i("TAG", "removeInvitationFromFriends: invitations not updated")
+                            Log.i("rmvInvFromFriends", "updated invitations for ${fRef.id}")
+                        }catch (e: Exception) {
+                            Log.e("rmvInvFromFriends", "Exception during update for ${fRef.id}: ${e.message}")
+                            throw e
                         }
                     }
                 }.addOnSuccessListener {
-                    Log.i("TAG", "Invitations supprimées")
+                    Log.i("rmvInvFromFriends", "Invitations supprimées")
                 }.addOnFailureListener {
-                    Log.e("TAG", "Erreur transaction")
+                    Log.e("rmvInvFromFriends", "Erreur transaction: ${it.message}")
                 }
             }.addOnFailureListener {
-                Log.e("TAG", "Erreur recupération amis")
+                Log.e("rmvInvFromFriends", "Erreur recupération amis")
             }
         } else {
-            Log.e("TAG", "Aucun utilisateur")
+            Log.e("rmvInvFromFriends", "Aucun utilisateur")
         }
     }.addOnFailureListener {
-        Log.e("TAG", "Erreur recupération utilisateur")
+        Log.e("rmvInvFromFriends", "Erreur recupération utilisateur")
     }
 }
 
