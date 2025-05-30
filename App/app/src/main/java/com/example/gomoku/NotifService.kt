@@ -43,6 +43,10 @@ class NotifService : Service() {
                 while(auth.currentUser != null) {
                     Thread.sleep(10000)
                     Log.i("NotifService", "Checking for new requests or invitations")
+                    if(auth.currentUser == null){
+                        stopSelf(msg.arg1)
+                        return
+                    }
 
                     val user = auth.currentUser!!.uid
                     Log.i("NotifService", "User : $user")
