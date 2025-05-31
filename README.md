@@ -22,6 +22,11 @@ La maquette du projet est disponible sur Figma :
 
 ---
 
+## Vidéo de présentation
+
+[![Watch the video](https://img.youtube.com/vi/JW6b_LcNrrI/0.jpg)](https://www.youtube.com/watch?v=JW6b_LcNrrI)
+---
+
 Quelques vues de notre application :
 
 <img src="/Screenshots/menu_on.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/partie_hors_ligne.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/historique.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/leaderboard.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/amis.png" alt="menu" style="width:15%; height:auto;"> <img src="/Screenshots/blitz.png" alt="menu" style="width:15%; height:auto;">
