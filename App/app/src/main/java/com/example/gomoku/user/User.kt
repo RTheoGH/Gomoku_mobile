@@ -5,5 +5,7 @@ data class User(
     val pseudo: String,
     val elo: Int,
     val friends: List<String>,
-    val requests: List<String>
+    val requests: List<String>,
+    val profile_pic: String,
+    val invitation: List<String>
 )

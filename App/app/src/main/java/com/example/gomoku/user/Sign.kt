@@ -236,7 +236,9 @@ fun Sign_up(pad : PaddingValues, navController: NavHostController, auth: Firebas
                                             pseudo = pseudo,
                                             elo = 1000,
                                             requests = listOf(),
-                                            friends = listOf()
+                                            friends = listOf(),
+                                            profile_pic = "",
+                                            invitation = listOf()
                                         )
 
                                         db.collection("users")

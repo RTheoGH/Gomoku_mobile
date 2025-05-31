@@ -51,7 +51,7 @@ fun Leaderboard(pad : PaddingValues, navController: NavHostController, db: Fireb
                     val elo = doc.data?.get("elo")
                     val friends = doc.data?.get("friends") as List<String>
                     val requests = doc.data?.get("requests") as List<String>
-                    User(email, pseudo, elo.toString().toInt(), friends, requests)
+                    User(email, pseudo, elo.toString().toInt(), friends, requests, "", listOf())
                 }
                 leaderboard = users
                 loading = false
